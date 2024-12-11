@@ -42,8 +42,7 @@ class _SigninPageState extends State<SigninPage> {
                 onPressed: () {
                   if (_formKey.currentState!.validate()) {
                     _formKey.currentState!.save();
-                    Navigator.pushNamed(
-                        context, '/friends'); // Navigate to Friends List
+                    Navigator.pushNamed(context, '/friends');
                     ScaffoldMessenger.of(context).showSnackBar(
                       SnackBar(content: Text('Signin Successful')),
                     );
