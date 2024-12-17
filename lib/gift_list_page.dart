@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'gift_details_page.dart';
 
 class GiftListPage extends StatefulWidget {
   final String eventName;
@@ -15,169 +16,152 @@ class _GiftListPageState extends State<GiftListPage> {
       'name': 'Watch',
       'category': 'Accessory',
       'pledged': false,
+      'image': 'assets/watch.png'
     },
     {
       'name': 'Chocolate Box',
       'category': 'Food',
       'pledged': true,
+      'image': 'assets/chocolates.png'
     },
     {
       'name': 'Flowers',
       'category': 'Decoration',
       'pledged': false,
+      'image': 'assets/flowers.png'
     },
   ];
 
-  String selectedSort = 'name';
-
-  @override
-  Widget build(BuildContext context) {
-    final sortedGifts = List<Map<String, dynamic>>.from(gifts);
-    sortedGifts.sort((a, b) {
-      if (selectedSort == 'pledged') {
-        return a['pledged'].toString().compareTo(b['pledged'].toString());
-      } else {
-        return a[selectedSort].compareTo(b[selectedSort]);
-      }
-    });
-
-    return Scaffold(
-      appBar: AppBar(
-        title: Text('Gifts for ${widget.eventName}'),
-        actions: [
-          PopupMenuButton<String>(
-            onSelected: (value) {
-              setState(() {
-                selectedSort = value;
-              });
-            },
-            itemBuilder: (context) => [
-              PopupMenuItem(value: 'name', child: Text('Sort by Name')),
-              PopupMenuItem(value: 'category', child: Text('Sort by Category')),
-              PopupMenuItem(
-                  value: 'pledged', child: Text('Sort by Pledged Status')),
-            ],
-          ),
-        ],
-      ),
-      body: ListView.builder(
-        itemCount: sortedGifts.length,
-        itemBuilder: (context, index) {
-          final gift = sortedGifts[index];
-          return Container(
-            color: gift['pledged'] ? Colors.green[100] : null,
-            child: ListTile(
-              title: Text(gift['name']),
-              subtitle: Text(gift['category']),
-              trailing: Row(
-                mainAxisSize: MainAxisSize.min,
-                children: [
-                  if (!gift['pledged'])
-                    IconButton(
-                      icon: Icon(Icons.edit, color: Colors.blue),
-                      onPressed: () {
-                        _editGift(gift);
-                      },
-                    ),
-                  IconButton(
-                    icon: Icon(Icons.delete, color: Colors.red),
-                    onPressed: () {
-                      if (!gift['pledged']) {
-                        setState(() {
-                          gifts.remove(gift);
-                        });
-                      } else {
-                        ScaffoldMessenger.of(context).showSnackBar(
-                          SnackBar(
-                              content: Text('Cannot delete pledged gifts.')),
-                        );
-                      }
-                    },
-                  ),
-                ],
-              ),
-              onTap: () {
-                setState(() {
-                  gift['pledged'] = !gift['pledged'];
-                });
-              },
-            ),
-          );
-        },
-      ),
-      floatingActionButton: FloatingActionButton(
-        onPressed: _addGift,
-        child: Icon(Icons.add),
-      ),
-    );
-  }
-
   void _addGift() {
-    _showGiftDialog(isEdit: false);
-  }
-
-  void _editGift(Map<String, dynamic> gift) {
-    _showGiftDialog(isEdit: true, currentGift: gift);
-  }
-
-  void _showGiftDialog(
-      {required bool isEdit, Map<String, dynamic>? currentGift}) {
-    final nameController =
-        TextEditingController(text: currentGift?['name'] ?? '');
-    final categoryController =
-        TextEditingController(text: currentGift?['category'] ?? '');
+    final nameController = TextEditingController();
+    final categoryController = TextEditingController();
+    bool isPledged = false;
 
     showDialog(
       context: context,
       builder: (context) {
         return AlertDialog(
-          title: Text(isEdit ? 'Edit Gift' : 'Add Gift'),
+          title: Text('Add New Gift'),
           content: SingleChildScrollView(
             child: Column(
+              mainAxisSize: MainAxisSize.min,
               children: [
-                TextField(
-                  controller: nameController,
-                  decoration: InputDecoration(labelText: 'Gift Name'),
-                ),
-                TextField(
-                  controller: categoryController,
-                  decoration: InputDecoration(labelText: 'Category'),
+                _buildTextField(
+                    'Gift Name', nameController, Icons.card_giftcard),
+                SizedBox(height: 10),
+                _buildTextField('Category', categoryController, Icons.category),
+                SizedBox(height: 10),
+                CheckboxListTile(
+                  title: Text('Pledged'),
+                  value: isPledged,
+                  onChanged: (value) {
+                    setState(() {
+                      isPledged = value ?? false;
+                    });
+                  },
                 ),
               ],
             ),
           ),
           actions: [
             TextButton(
-              child: Text(isEdit ? 'Save' : 'Add'),
+              onPressed: () => Navigator.pop(context),
+              child: Text('Cancel'),
+            ),
+            ElevatedButton(
               onPressed: () {
-                setState(() {
-                  if (isEdit && currentGift != null) {
-                    if (!currentGift['pledged']) {
-                      currentGift['name'] = nameController.text;
-                      currentGift['category'] = categoryController.text;
-                    } else {
-                      ScaffoldMessenger.of(context).showSnackBar(
-                        SnackBar(content: Text('Cannot edit pledged gifts.')),
-                      );
-                    }
-                  } else {
+                if (nameController.text.isNotEmpty &&
+                    categoryController.text.isNotEmpty) {
+                  setState(() {
                     gifts.add({
                       'name': nameController.text,
                       'category': categoryController.text,
-                      'pledged': false,
+                      'pledged': isPledged,
+                      'image': 'assets/default.png', // Default image
                     });
-                  }
-                });
-                Navigator.of(context).pop();
+                  });
+                  Navigator.pop(context);
+                  ScaffoldMessenger.of(context).showSnackBar(
+                    SnackBar(content: Text('Gift added successfully!')),
+                  );
+                } else {
+                  ScaffoldMessenger.of(context).showSnackBar(
+                    SnackBar(content: Text('Please fill all fields')),
+                  );
+                }
               },
-            ),
-            TextButton(
-              child: Text('Cancel'),
-              onPressed: Navigator.of(context).pop,
+              child: Text('Add Gift'),
             ),
           ],
         );
       },
+    );
+  }
+
+  Widget _buildTextField(
+      String label, TextEditingController controller, IconData icon) {
+    return TextField(
+      controller: controller,
+      decoration: InputDecoration(
+        labelText: label,
+        prefixIcon: Icon(icon),
+        border: OutlineInputBorder(
+          borderRadius: BorderRadius.circular(12),
+        ),
+      ),
+    );
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return Scaffold(
+      appBar: AppBar(
+        title: Text('Gifts for ${widget.eventName}'),
+        centerTitle: true,
+      ),
+      body: ListView.builder(
+        itemCount: gifts.length,
+        itemBuilder: (context, index) {
+          final gift = gifts[index];
+          return Card(
+            margin: EdgeInsets.symmetric(vertical: 8.0, horizontal: 12.0),
+            elevation: 4,
+            shape:
+                RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+            child: InkWell(
+              borderRadius: BorderRadius.circular(12),
+              onTap: () {
+                Navigator.push(
+                  context,
+                  MaterialPageRoute(
+                    builder: (context) => GiftDetailsPage(
+                      isPledged: gift['pledged'] ?? false,
+                      gift: gift,
+                    ),
+                  ),
+                );
+              },
+              child: ListTile(
+                leading: CircleAvatar(
+                  radius: 30,
+                  backgroundImage: AssetImage(gift['image']),
+                ),
+                title: Text(
+                  gift['name'],
+                  style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
+                ),
+                subtitle: Text(gift['category']),
+                trailing: Icon(Icons.arrow_forward_ios, color: Colors.blue),
+              ),
+            ),
+          );
+        },
+      ),
+      floatingActionButton: FloatingActionButton.extended(
+        onPressed: _addGift,
+        icon: Icon(Icons.add),
+        label: Text('Add Gift'),
+      ),
     );
   }
 }

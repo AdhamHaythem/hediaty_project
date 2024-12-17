@@ -36,93 +36,113 @@ class _GiftDetailsPageState extends State<GiftDetailsPage> {
   @override
   Widget build(BuildContext context) {
     bool canEdit = !isPledged;
+
     return Scaffold(
       appBar: AppBar(
         title: Text('Gift Details'),
+        centerTitle: true,
       ),
       body: Padding(
         padding: const EdgeInsets.all(16.0),
-        child: Form(
-          key: _formKey,
-          child: ListView(
-            children: [
-              if (imagePath != null)
-                Image.asset(imagePath!)
-              else
-                Container(
-                  width: 100,
-                  height: 100,
-                  color: Colors.grey[300],
-                  child: Center(child: Text('No image')),
-                ),
-              SizedBox(height: 10),
-              ElevatedButton(
-                onPressed: canEdit
-                    ? () {
-                        setState(() {
-                          imagePath = 'assets/sample_gift_image.png';
-                        });
-                      }
-                    : null,
-                child: Text('Upload Image'),
+        child: Card(
+          elevation: 4,
+          shape:
+              RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+          child: Padding(
+            padding: const EdgeInsets.all(16.0),
+            child: Form(
+              key: _formKey,
+              child: ListView(
+                shrinkWrap: true,
+                children: [
+                  Center(
+                    child: CircleAvatar(
+                      radius: 60,
+                      backgroundColor: Colors.grey[300],
+                      backgroundImage:
+                          imagePath != null ? AssetImage(imagePath!) : null,
+                      child: imagePath == null
+                          ? Icon(Icons.image, size: 50, color: Colors.grey)
+                          : null,
+                    ),
+                  ),
+                  SizedBox(height: 10),
+                  ElevatedButton.icon(
+                    onPressed: canEdit
+                        ? () {
+                            setState(() {
+                              imagePath = 'assets/sample_gift_image.png';
+                            });
+                          }
+                        : null,
+                    icon: Icon(Icons.upload),
+                    label: Text('Upload Image'),
+                  ),
+                  _buildTextField('Gift Name', nameController, canEdit,
+                      Icons.card_giftcard),
+                  _buildTextField('Description', descController, canEdit,
+                      Icons.description),
+                  _buildTextField(
+                      'Category', categoryController, canEdit, Icons.category),
+                  _buildTextField(
+                      'Price', priceController, canEdit, Icons.money,
+                      isNumeric: true),
+                  SwitchListTile(
+                    title: Text('Pledged'),
+                    value: isPledged,
+                    onChanged: canEdit
+                        ? (val) {
+                            setState(() {
+                              isPledged = val;
+                            });
+                          }
+                        : null,
+                  ),
+                  SizedBox(height: 20),
+                  ElevatedButton(
+                    onPressed: canEdit
+                        ? () {
+                            if (_formKey.currentState!.validate()) {
+                              ScaffoldMessenger.of(context).showSnackBar(
+                                SnackBar(content: Text('Gift details saved')),
+                              );
+                              Navigator.pop(context);
+                            }
+                          }
+                        : null,
+                    child: Text('Save Details'),
+                  )
+                ],
               ),
-              TextFormField(
-                controller: nameController,
-                decoration: InputDecoration(labelText: 'Gift Name'),
-                enabled: canEdit,
-                validator: (val) =>
-                    val == null || val.isEmpty ? 'Enter a gift name' : null,
-              ),
-              TextFormField(
-                controller: descController,
-                decoration: InputDecoration(labelText: 'Description'),
-                enabled: canEdit,
-              ),
-              TextFormField(
-                controller: categoryController,
-                decoration: InputDecoration(labelText: 'Category'),
-                enabled: canEdit,
-              ),
-              TextFormField(
-                controller: priceController,
-                decoration: InputDecoration(labelText: 'Price'),
-                enabled: canEdit,
-                keyboardType: TextInputType.number,
-                validator: (val) {
-                  if (val == null || val.isEmpty) return 'Enter a price';
-                  if (double.tryParse(val) == null)
-                    return 'Enter a valid number';
-                  return null;
-                },
-              ),
-              SwitchListTile(
-                title: Text('Pledged'),
-                value: isPledged,
-                onChanged: canEdit
-                    ? (val) {
-                        setState(() {
-                          isPledged = val;
-                        });
-                      }
-                    : null,
-              ),
-              SizedBox(height: 20),
-              ElevatedButton(
-                onPressed: canEdit
-                    ? () {
-                        if (_formKey.currentState!.validate()) {
-                          ScaffoldMessenger.of(context).showSnackBar(
-                            SnackBar(content: Text('Gift details saved')),
-                          );
-                          Navigator.pop(context);
-                        }
-                      }
-                    : null,
-                child: Text('Save'),
-              )
-            ],
+            ),
           ),
         ),
+      ),
+    );
+  }
+
+  Widget _buildTextField(String label, TextEditingController controller,
+      bool enabled, IconData icon,
+      {bool isNumeric = false}) {
+    return Padding(
+      padding: const EdgeInsets.symmetric(vertical: 8.0),
+      child: TextFormField(
+        controller: controller,
+        enabled: enabled,
+        decoration: InputDecoration(
+          labelText: label,
+          prefixIcon: Icon(icon),
+          border: OutlineInputBorder(borderRadius: BorderRadius.circular(12)),
+        ),
+        keyboardType: isNumeric ? TextInputType.number : TextInputType.text,
+        validator: (val) {
+          if (label == 'Price' &&
+              (val == null || double.tryParse(val) == null)) {
+            return 'Enter a valid number';
+          }
+          if (val == null || val.isEmpty) return 'Please enter $label';
+          return null;
+        },
       ),
     );
   }

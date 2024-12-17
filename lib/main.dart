@@ -27,6 +27,7 @@ class HedieatyApp extends StatelessWidget {
         '/giftList': (context) => GiftListPage(eventName: 'Example Event'),
         '/profile': (context) => ProfilePage(),
         '/myPledgedGifts': (context) => MyPledgedGiftsPage(),
+        '/GiftDetails': (context) => GiftDetailsPage(),
         // For GiftDetailsPage, you can push using MaterialPageRoute directly
         // or define a route that takes arguments if needed.
       },

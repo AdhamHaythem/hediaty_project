@@ -7,21 +7,9 @@ class EventsPage extends StatefulWidget {
 
 class _EventsPageState extends State<EventsPage> {
   List<Map<String, dynamic>> events = [
-    {
-      'name': 'Birthday Party',
-      'category': 'Personal',
-      'status': 'Upcoming',
-    },
-    {
-      'name': 'Conference',
-      'category': 'Work',
-      'status': 'Current',
-    },
-    {
-      'name': 'Past Meetup',
-      'category': 'Social',
-      'status': 'Past',
-    },
+    {'name': 'Birthday Party', 'category': 'Personal', 'status': 'Upcoming'},
+    {'name': 'Conference', 'category': 'Work', 'status': 'Current'},
+    {'name': 'Past Meetup', 'category': 'Social', 'status': 'Past'},
   ];
 
   String selectedSort = 'name';
@@ -34,13 +22,10 @@ class _EventsPageState extends State<EventsPage> {
     return Scaffold(
       appBar: AppBar(
         title: Text('Events'),
+        centerTitle: true,
         actions: [
           PopupMenuButton<String>(
-            onSelected: (value) {
-              setState(() {
-                selectedSort = value;
-              });
-            },
+            onSelected: (value) => setState(() => selectedSort = value),
             itemBuilder: (context) => [
               PopupMenuItem(value: 'name', child: Text('Sort by Name')),
               PopupMenuItem(value: 'category', child: Text('Sort by Category')),
@@ -53,44 +38,44 @@ class _EventsPageState extends State<EventsPage> {
         itemCount: sortedEvents.length,
         itemBuilder: (context, index) {
           final event = sortedEvents[index];
-          return ListTile(
-            title: Text(event['name']),
-            subtitle: Text('${event['category']} • ${event['status']}'),
-            trailing: Row(
-              mainAxisSize: MainAxisSize.min,
-              children: [
-                IconButton(
-                  icon: Icon(Icons.edit, color: Colors.blue),
-                  onPressed: () {
-                    _editEvent(event);
-                  },
-                ),
-                IconButton(
-                  icon: Icon(Icons.delete, color: Colors.red),
-                  onPressed: () {
-                    setState(() {
-                      events.remove(event);
-                    });
-                  },
-                ),
-              ],
+          return Card(
+            margin: EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+            elevation: 4,
+            child: ListTile(
+              leading: Icon(Icons.event, color: Colors.blueAccent),
+              title: Text(event['name'],
+                  style: TextStyle(fontWeight: FontWeight.bold)),
+              subtitle: Text('${event['category']} • ${event['status']}'),
+              trailing: Row(
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  IconButton(
+                      icon: Icon(Icons.edit, color: Colors.blue),
+                      onPressed: () => _editEvent(event)),
+                  IconButton(
+                      icon: Icon(Icons.delete, color: Colors.red),
+                      onPressed: () => _deleteEvent(event)),
+                ],
+              ),
             ),
           );
         },
       ),
-      floatingActionButton: FloatingActionButton(
+      floatingActionButton: FloatingActionButton.extended(
         onPressed: _addEvent,
-        child: Icon(Icons.add),
+        icon: Icon(Icons.add),
+        label: Text('Add Event'),
       ),
     );
   }
 
-  void _addEvent() {
-    _showEventDialog(isEdit: false);
-  }
+  void _addEvent() => _showEventDialog(isEdit: false);
 
-  void _editEvent(Map<String, dynamic> event) {
-    _showEventDialog(isEdit: true, currentEvent: event);
+  void _editEvent(Map<String, dynamic> event) =>
+      _showEventDialog(isEdit: true, currentEvent: event);
+
+  void _deleteEvent(Map<String, dynamic> event) {
+    setState(() => events.remove(event));
   }
 
   void _showEventDialog(
@@ -110,25 +95,16 @@ class _EventsPageState extends State<EventsPage> {
           content: SingleChildScrollView(
             child: Column(
               children: [
-                TextField(
-                  controller: nameController,
-                  decoration: InputDecoration(labelText: 'Name'),
-                ),
-                TextField(
-                  controller: categoryController,
-                  decoration: InputDecoration(labelText: 'Category'),
-                ),
-                TextField(
-                  controller: statusController,
-                  decoration: InputDecoration(
-                      labelText: 'Status (Upcoming/Current/Past)'),
-                ),
+                _buildTextField('Name', nameController),
+                _buildTextField('Category', categoryController),
+                _buildTextField('Status', statusController),
               ],
             ),
           ),
           actions: [
             TextButton(
-              child: Text(isEdit ? 'Save' : 'Add'),
+                child: Text('Cancel'), onPressed: () => Navigator.pop(context)),
+            ElevatedButton(
               onPressed: () {
                 setState(() {
                   if (isEdit && currentEvent != null) {
@@ -143,16 +119,26 @@ class _EventsPageState extends State<EventsPage> {
                     });
                   }
                 });
-                Navigator.of(context).pop();
+                Navigator.pop(context);
               },
-            ),
-            TextButton(
-              child: Text('Cancel'),
-              onPressed: Navigator.of(context).pop,
+              child: Text('Save'),
             ),
           ],
         );
       },
+    );
+  }
+
+  Widget _buildTextField(String label, TextEditingController controller) {
+    return Padding(
+      padding: const EdgeInsets.symmetric(vertical: 8.0),
+      child: TextField(
+        controller: controller,
+        decoration: InputDecoration(
+          labelText: label,
+          border: OutlineInputBorder(borderRadius: BorderRadius.circular(12)),
+        ),
+      ),
     );
   }
 }
