@@ -1,3 +1,4 @@
+import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
 
 class SignupPage extends StatefulWidget {
@@ -8,98 +9,95 @@ class SignupPage extends StatefulWidget {
 class _SignupPageState extends State<SignupPage> {
   final _formKey = GlobalKey<FormState>();
   String? username, email, password, confirmPassword;
+  String _tempPassword = ''; // Temporary variable for password
 
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      appBar: AppBar(
-        title: Text('Sign Up'),
-        centerTitle: true,
-      ),
-      body: SingleChildScrollView(
+      appBar: AppBar(title: Text('Signup')),
+      body: Padding(
         padding: const EdgeInsets.all(16.0),
-        child: Column(
-          children: [
-            SizedBox(height: 20),
-            Text(
-              'Create an Account',
-              style: TextStyle(fontSize: 28, fontWeight: FontWeight.bold),
-            ),
-            SizedBox(height: 30),
-            Form(
-              key: _formKey,
-              child: Column(
-                children: [
-                  _buildTextField('Username', Icons.person, false, (value) {
-                    return value == null || value.isEmpty
-                        ? 'Enter a username'
-                        : null;
-                  }),
-                  _buildTextField('Email', Icons.email, false, (value) {
-                    return value == null || !value.contains('@')
-                        ? 'Enter a valid email'
-                        : null;
-                  }),
-                  _buildTextField('Password', Icons.lock, true, (value) {
-                    return value == null || value.length < 6
-                        ? 'Password must be at least 6 characters'
-                        : null;
-                  }),
-                  _buildTextField('Confirm Password', Icons.lock_outline, true,
-                      (value) {
-                    return value != password ? 'Passwords do not match' : null;
-                  }),
-                  SizedBox(height: 30),
-                  ElevatedButton(
-                    style: ElevatedButton.styleFrom(
-                      padding: EdgeInsets.symmetric(vertical: 12),
-                      shape: RoundedRectangleBorder(
-                        borderRadius: BorderRadius.circular(12),
-                      ),
-                    ),
-                    onPressed: () {
-                      if (_formKey.currentState!.validate()) {
-                        ScaffoldMessenger.of(context).showSnackBar(
-                          SnackBar(content: Text('Sign-up Successful!')),
-                        );
-                      }
-                    },
-                    child: Text('Sign Up', style: TextStyle(fontSize: 18)),
-                  ),
-                ],
+        child: Form(
+          key: _formKey,
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.stretch,
+            children: [
+              TextFormField(
+                decoration: InputDecoration(labelText: 'Username'),
+                validator: (value) => value == null || value.isEmpty
+                    ? 'Please enter a username'
+                    : null,
+                onSaved: (value) => username = value,
               ),
-            ),
-            SizedBox(height: 10),
-            TextButton(
-              onPressed: () {
-                Navigator.pushNamed(context, '/signin');
-              },
-              child: Text('Already have an account? Sign in'),
-            ),
-          ],
+              TextFormField(
+                decoration: InputDecoration(labelText: 'Email'),
+                keyboardType: TextInputType.emailAddress,
+                validator: (value) => value == null || !value.contains('@')
+                    ? 'Please enter a valid email'
+                    : null,
+                onSaved: (value) => email = value,
+              ),
+              TextFormField(
+                decoration: InputDecoration(labelText: 'Password'),
+                obscureText: true,
+                validator: (value) {
+                  if (value == null || value.length < 6) {
+                    return 'Password must be at least 6 characters';
+                  }
+                  return null;
+                },
+                onChanged: (value) {
+                  _tempPassword = value; // Temporarily store password
+                },
+                onSaved: (value) => password = value,
+              ),
+              TextFormField(
+                decoration: InputDecoration(labelText: 'Confirm Password'),
+                obscureText: true,
+                validator: (value) {
+                  if (value == null || value != _tempPassword) {
+                    return 'Passwords do not match';
+                  }
+                  return null;
+                },
+                onSaved: (value) => confirmPassword = value,
+              ),
+              SizedBox(height: 20),
+              ElevatedButton(
+                child: Text('Signup'),
+                onPressed: _handleSignup,
+              ),
+              TextButton(
+                child: Text('Already have an account? Signin'),
+                onPressed: () =>
+                    Navigator.pop(context), // Go back to SigninPage
+              ),
+            ],
+          ),
         ),
       ),
     );
   }
 
-  Widget _buildTextField(String label, IconData icon, bool obscure,
-      String? Function(String?) validator) {
-    return Padding(
-      padding: const EdgeInsets.symmetric(vertical: 10),
-      child: TextFormField(
-        obscureText: obscure,
-        decoration: InputDecoration(
-          labelText: label,
-          prefixIcon: Icon(icon),
-          border: OutlineInputBorder(
-            borderRadius: BorderRadius.circular(12),
-          ),
-        ),
-        validator: validator,
-        onChanged: (value) {
-          if (label == 'Password') password = value;
-        },
-      ),
-    );
+  Future<void> _handleSignup() async {
+    if (_formKey.currentState!.validate()) {
+      _formKey.currentState!.save(); // Save the form values
+
+      try {
+        await FirebaseAuth.instance
+            .createUserWithEmailAndPassword(email: email!, password: password!);
+        // Success feedback
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text('Signup Successful: ${email}')),
+        );
+        // Go back to the SigninPage
+        Navigator.pop(context);
+      } on FirebaseAuthException catch (e) {
+        // Display error message in a SnackBar
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text('Signup failed: ${e.message}')),
+        );
+      }
+    }
   }
 }

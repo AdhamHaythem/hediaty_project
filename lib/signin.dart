@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:firebase_auth/firebase_auth.dart';
 
 class SigninPage extends StatefulWidget {
   @override
@@ -12,77 +13,38 @@ class _SigninPageState extends State<SigninPage> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      appBar: AppBar(
-        title: Text('Sign In'),
-        centerTitle: true,
-      ),
-      body: SingleChildScrollView(
-        child: Padding(
-          padding: const EdgeInsets.all(16.0),
+      appBar: AppBar(title: Text('Signin')),
+      body: Padding(
+        padding: const EdgeInsets.all(16.0),
+        child: Form(
+          key: _formKey,
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.stretch,
             children: [
+              TextFormField(
+                decoration: InputDecoration(labelText: 'Email'),
+                keyboardType: TextInputType.emailAddress,
+                validator: (value) => value == null || !value.contains('@')
+                    ? 'Please enter a valid email'
+                    : null,
+                onSaved: (value) => email = value,
+              ),
+              TextFormField(
+                decoration: InputDecoration(labelText: 'Password'),
+                obscureText: true,
+                validator: (value) => value == null || value.isEmpty
+                    ? 'Please enter a password'
+                    : null,
+                onSaved: (value) => password = value,
+              ),
               SizedBox(height: 20),
-              // Header
-              Text(
-                'Welcome Back!',
-                textAlign: TextAlign.center,
-                style: TextStyle(
-                  fontSize: 28,
-                  fontWeight: FontWeight.bold,
-                ),
-              ),
-              SizedBox(height: 40),
-
-              // Form
-              Form(
-                key: _formKey,
-                child: Column(
-                  children: [
-                    _buildTextField('Email', Icons.email, false, (value) {
-                      if (value == null || !value.contains('@')) {
-                        return 'Please enter a valid email';
-                      }
-                      return null;
-                    }),
-                    SizedBox(height: 20),
-                    _buildTextField('Password', Icons.lock, true, (value) {
-                      if (value == null || value.isEmpty) {
-                        return 'Please enter your password';
-                      }
-                      return null;
-                    }),
-                  ],
-                ),
-              ),
-
-              SizedBox(height: 30),
               ElevatedButton(
-                style: ElevatedButton.styleFrom(
-                  padding: EdgeInsets.symmetric(vertical: 12),
-                  shape: RoundedRectangleBorder(
-                    borderRadius: BorderRadius.circular(12),
-                  ),
-                ),
-                onPressed: () {
-                  if (_formKey.currentState!.validate()) {
-                    Navigator.pushNamed(context, '/friends');
-                    ScaffoldMessenger.of(context).showSnackBar(
-                      SnackBar(content: Text('Sign-in Successful!')),
-                    );
-                  }
-                },
-                child: Text(
-                  'Sign In',
-                  style: TextStyle(fontSize: 18),
-                ),
+                child: Text('Signin'),
+                onPressed: _handleSignin,
               ),
-              SizedBox(height: 10),
               TextButton(
-                onPressed: () {
-                  Navigator.pushNamed(context, '/signup');
-                },
-                child: Text('Don’t have an account? Sign up'),
+                child: Text('Don’t have an account? Signup'),
+                onPressed: _navigateToSignup,
               ),
             ],
           ),
@@ -91,18 +53,25 @@ class _SigninPageState extends State<SigninPage> {
     );
   }
 
-  Widget _buildTextField(String label, IconData icon, bool obscure,
-      String? Function(String?) validator) {
-    return TextFormField(
-      obscureText: obscure,
-      decoration: InputDecoration(
-        labelText: label,
-        prefixIcon: Icon(icon),
-        border: OutlineInputBorder(
-          borderRadius: BorderRadius.circular(12),
-        ),
-      ),
-      validator: validator,
-    );
+  Future<void> _handleSignin() async {
+    if (_formKey.currentState!.validate()) {
+      _formKey.currentState!.save();
+
+      try {
+        await FirebaseAuth.instance.signInWithEmailAndPassword(
+          email: email!,
+          password: password!,
+        );
+        Navigator.pushReplacementNamed(context, '/friends');
+      } on FirebaseAuthException catch (e) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text('Signin failed: ${e.message}')),
+        );
+      }
+    }
+  }
+
+  void _navigateToSignup() {
+    Navigator.pushNamed(context, '/signup');
   }
 }
