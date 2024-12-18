@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
-import 'package:firebase_auth/firebase_auth.dart';
+import 'controllers/user_controller.dart';
+import 'models/user_model.dart';
 
 class SigninPage extends StatefulWidget {
   @override
@@ -9,6 +10,8 @@ class SigninPage extends StatefulWidget {
 class _SigninPageState extends State<SigninPage> {
   final _formKey = GlobalKey<FormState>();
   String? email, password;
+
+  final UserController _userController = UserController();
 
   @override
   Widget build(BuildContext context) {
@@ -33,7 +36,7 @@ class _SigninPageState extends State<SigninPage> {
                 decoration: InputDecoration(labelText: 'Password'),
                 obscureText: true,
                 validator: (value) => value == null || value.isEmpty
-                    ? 'Please enter a password'
+                    ? 'Please enter your password'
                     : null,
                 onSaved: (value) => password = value,
               ),
@@ -44,7 +47,7 @@ class _SigninPageState extends State<SigninPage> {
               ),
               TextButton(
                 child: Text('Don’t have an account? Signup'),
-                onPressed: _navigateToSignup,
+                onPressed: () => Navigator.pushNamed(context, '/signup'),
               ),
             ],
           ),
@@ -57,21 +60,19 @@ class _SigninPageState extends State<SigninPage> {
     if (_formKey.currentState!.validate()) {
       _formKey.currentState!.save();
 
-      try {
-        await FirebaseAuth.instance.signInWithEmailAndPassword(
-          email: email!,
-          password: password!,
+      UserModel? loggedInUser = await _userController.signin(email!, password!);
+
+      if (loggedInUser != null) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text('Welcome back, ${loggedInUser.username}!')),
         );
         Navigator.pushReplacementNamed(context, '/friends');
-      } on FirebaseAuthException catch (e) {
+      } else {
         ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text('Signin failed: ${e.message}')),
+          SnackBar(
+              content: Text('Signin Failed. Please check your credentials.')),
         );
       }
     }
-  }
-
-  void _navigateToSignup() {
-    Navigator.pushNamed(context, '/signup');
   }
 }

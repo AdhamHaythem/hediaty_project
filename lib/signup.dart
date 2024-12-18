@@ -1,5 +1,6 @@
-import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
+import 'controllers/user_controller.dart';
+import 'models/user_model.dart';
 
 class SignupPage extends StatefulWidget {
   @override
@@ -9,7 +10,9 @@ class SignupPage extends StatefulWidget {
 class _SignupPageState extends State<SignupPage> {
   final _formKey = GlobalKey<FormState>();
   String? username, email, password, confirmPassword;
-  String _tempPassword = ''; // Temporary variable for password
+  String _tempPassword = ''; // Temporary password variable
+
+  final UserController _userController = UserController();
 
   @override
   Widget build(BuildContext context) {
@@ -47,7 +50,7 @@ class _SignupPageState extends State<SignupPage> {
                   return null;
                 },
                 onChanged: (value) {
-                  _tempPassword = value; // Temporarily store password
+                  _tempPassword = value; // Update temp password
                 },
                 onSaved: (value) => password = value,
               ),
@@ -69,8 +72,7 @@ class _SignupPageState extends State<SignupPage> {
               ),
               TextButton(
                 child: Text('Already have an account? Signin'),
-                onPressed: () =>
-                    Navigator.pop(context), // Go back to SigninPage
+                onPressed: () => Navigator.pop(context),
               ),
             ],
           ),
@@ -81,21 +83,27 @@ class _SignupPageState extends State<SignupPage> {
 
   Future<void> _handleSignup() async {
     if (_formKey.currentState!.validate()) {
-      _formKey.currentState!.save(); // Save the form values
+      _formKey.currentState!.save();
 
       try {
-        await FirebaseAuth.instance
-            .createUserWithEmailAndPassword(email: email!, password: password!);
-        // Success feedback
+        UserModel? newUser =
+            await _userController.signup(email!, password!, username!);
+
+        if (newUser != null) {
+          ScaffoldMessenger.of(context).showSnackBar(
+            SnackBar(
+                content:
+                    Text('Signup successful! Welcome ${newUser.username}')),
+          );
+          Navigator.pushReplacementNamed(context, '/friends');
+        } else {
+          ScaffoldMessenger.of(context).showSnackBar(
+            SnackBar(content: Text('Signup failed. Please try again.')),
+          );
+        }
+      } catch (e) {
         ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text('Signup Successful: ${email}')),
-        );
-        // Go back to the SigninPage
-        Navigator.pop(context);
-      } on FirebaseAuthException catch (e) {
-        // Display error message in a SnackBar
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text('Signup failed: ${e.message}')),
+          SnackBar(content: Text('An error occurred: $e')),
         );
       }
     }

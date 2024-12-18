@@ -23,7 +23,7 @@ class HedieatyApp extends StatelessWidget {
       theme: ThemeData(
         primarySwatch: Colors.blue,
       ),
-      home: SigninPage(), // Default entry point
+      home: SigninPage(),
       routes: {
         '/signup': (context) => SignupPage(),
         '/friends': (context) => FriendsListPage(),
