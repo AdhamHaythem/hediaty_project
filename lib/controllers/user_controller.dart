@@ -6,11 +6,42 @@ class UserController {
   final FirebaseAuth _auth = FirebaseAuth.instance;
   final FirebaseFirestore _firestore = FirebaseFirestore.instance;
 
-  // Signup a user and save to Firestore
+  // Signin Method
+  Future<UserModel?> signin(String email, String password) async {
+    try {
+      // Authenticate user with Firebase
+      UserCredential userCredential = await _auth.signInWithEmailAndPassword(
+        email: email,
+        password: password,
+      );
+
+      User? user = userCredential.user;
+
+      if (user != null) {
+        // Query Firestore for the user's details
+        DocumentSnapshot userDoc =
+            await _firestore.collection('users').doc(user.uid).get();
+
+        if (userDoc.exists) {
+          final data = userDoc.data() as Map<String, dynamic>;
+          return UserModel(
+            uid: user.uid,
+            email: user.email ?? '',
+            username: data['username'] ?? 'Unknown',
+          );
+        }
+      }
+    } catch (e) {
+      print('Signin Error: $e');
+    }
+    return null;
+  }
+
+  // Signup Method
   Future<UserModel?> signup(
       String email, String password, String username) async {
     try {
-      // Create user with FirebaseAuth
+      // Create user with Firebase Authentication
       UserCredential userCredential =
           await _auth.createUserWithEmailAndPassword(
         email: email,
@@ -20,54 +51,32 @@ class UserController {
       User? user = userCredential.user;
 
       if (user != null) {
-        // Create a UserModel
-        UserModel newUser = UserModel(
+        // Save user details to Firestore
+        final userData = {
+          'username': username,
+          'email': email,
+        };
+
+        await _firestore.collection('users').doc(user.uid).set(userData);
+
+        return UserModel(
           uid: user.uid,
           email: email,
           username: username,
         );
-
-        // Debugging logs
-        print('Attempting to add user to Firestore with UID: ${user.uid}');
-
-        // Save to Firestore using set
-        await _firestore.collection('users').doc(user.uid).set(newUser.toMap());
-
-        print('User successfully added to Firestore');
-        return newUser;
       }
     } catch (e) {
-      print('Signup Error: $e'); // Debugging log
+      print('Signup Error: $e');
     }
     return null;
   }
 
-  // Signin user and fetch data from Firestore
-  Future<UserModel?> signin(String email, String password) async {
+  // Logout Method
+  Future<void> logout() async {
     try {
-      // Sign in with FirebaseAuth
-      UserCredential userCredential = await _auth.signInWithEmailAndPassword(
-        email: email,
-        password: password,
-      );
-
-      User? user = userCredential.user;
-
-      if (user != null) {
-        // Fetch user data from Firestore
-        DocumentSnapshot userDoc =
-            await _firestore.collection('users').doc(user.uid).get();
-
-        if (userDoc.exists) {
-          print('User data retrieved from Firestore for UID: ${user.uid}');
-          return UserModel.fromMap(userDoc.data() as Map<String, dynamic>);
-        } else {
-          print('No user data found in Firestore for UID: ${user.uid}');
-        }
-      }
+      await _auth.signOut();
     } catch (e) {
-      print('Signin Error: $e');
+      print('Logout Error: $e');
     }
-    return null;
   }
 }

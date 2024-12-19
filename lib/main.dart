@@ -4,9 +4,9 @@ import 'signin.dart';
 import 'signup.dart';
 import 'friends_list_page.dart';
 import 'events_page.dart';
-import 'profile_page.dart';
 import 'gift_list_page.dart';
 import 'gift_details_page.dart';
+import 'profile_page.dart';
 import 'my_pledged_gifts_page.dart';
 
 void main() async {
@@ -44,6 +44,15 @@ class HedieatyApp extends StatelessWidget {
               builder: (context) => EventsPage(userId: userId),
             );
 
+          case '/gifts':
+            final args = settings.arguments as Map<String, dynamic>;
+            final userId = args['userId'] as String;
+            final eventId = args['eventId'] as String;
+            return MaterialPageRoute(
+              builder: (context) =>
+                  GiftListPage(userId: userId, eventId: eventId),
+            );
+
           case '/giftDetails':
             final args = settings.arguments as Map<String, dynamic>;
             final gift = args['gift'] as Map<String, dynamic>;
@@ -59,13 +68,6 @@ class HedieatyApp extends StatelessWidget {
           case '/profile':
             return MaterialPageRoute(
               builder: (context) => ProfilePage(),
-            );
-
-          case '/gifts':
-            final args = settings.arguments as Map<String, dynamic>;
-            final eventId = args['eventId'] as String;
-            return MaterialPageRoute(
-              builder: (context) => GiftListPage(eventId: eventId),
             );
 
           default:

@@ -1,5 +1,6 @@
 import 'package:cloud_firestore/cloud_firestore.dart';
 import '../models/event_model.dart';
+import '../models/gift_model.dart';
 
 class EventController {
   final FirebaseFirestore _firestore = FirebaseFirestore.instance;
@@ -27,23 +28,42 @@ class EventController {
         .add(event.toMap());
   }
 
-  // Update an event in the user's subcollection
-  Future<void> updateEvent(String userId, EventModel event) async {
-    await _firestore
+  // Fetch gifts for a specific event
+  Future<List<GiftModel>> fetchEventGifts(String userId, String eventId) async {
+    final snapshot = await _firestore
         .collection('users')
         .doc(userId)
         .collection('events')
-        .doc(event.id)
-        .update(event.toMap());
+        .doc(eventId)
+        .collection('gifts')
+        .get();
+
+    return snapshot.docs
+        .map((doc) =>
+            GiftModel.fromMap(doc.id, doc.data() as Map<String, dynamic>))
+        .toList();
   }
 
-  // Delete an event from the user's subcollection
-  Future<void> deleteEvent(String userId, String eventId) async {
+  // Add a gift to a specific event
+  Future<void> addGift(String userId, String eventId, GiftModel gift) async {
     await _firestore
         .collection('users')
         .doc(userId)
         .collection('events')
         .doc(eventId)
+        .collection('gifts')
+        .add(gift.toMap());
+  }
+
+  // Delete a gift from a specific event
+  Future<void> deleteGift(String userId, String eventId, String giftId) async {
+    await _firestore
+        .collection('users')
+        .doc(userId)
+        .collection('events')
+        .doc(eventId)
+        .collection('gifts')
+        .doc(giftId)
         .delete();
   }
 }
