@@ -1,41 +1,40 @@
+import 'event_model.dart';
+
 class UserModel {
   final String uid;
-  final String email;
   final String username;
-  final List<String> gifts;
-  final List<String> events;
-  final List<String> friends;
+  final String email;
+  final List<String> friends; // Friends' usernames
+  final List<EventModel> events; // List of events for the user
 
   UserModel({
     required this.uid,
-    required this.email,
     required this.username,
-    this.gifts = const [],
-    this.events = const [],
+    required this.email,
     this.friends = const [],
+    this.events = const [],
   });
 
-  // Convert to Map for Firestore
+  // Convert UserModel to Map for Firestore
   Map<String, dynamic> toMap() {
     return {
       'uid': uid,
-      'email': email,
       'username': username,
-      'gifts': gifts,
-      'events': events,
+      'email': email,
       'friends': friends,
+      'events': events.map((e) => e.toMap()).toList(),
     };
   }
 
-  // Create from Firestore Map
+  // Create UserModel from Firestore Map
   factory UserModel.fromMap(Map<String, dynamic> map) {
     return UserModel(
       uid: map['uid'] ?? '',
-      email: map['email'] ?? '',
       username: map['username'] ?? '',
-      gifts: List<String>.from(map['gifts'] ?? []),
-      events: List<String>.from(map['events'] ?? []),
+      email: map['email'] ?? '',
       friends: List<String>.from(map['friends'] ?? []),
+      events: List<EventModel>.from(
+          map['events']?.map((e) => EventModel.fromMap(e)) ?? []),
     );
   }
 }
