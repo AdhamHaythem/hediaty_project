@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'controllers/user_controller.dart';
 import 'models/user_model.dart';
+import 'friends_list_page.dart';
 
 class SignupPage extends StatefulWidget {
   @override
@@ -10,7 +11,7 @@ class SignupPage extends StatefulWidget {
 class _SignupPageState extends State<SignupPage> {
   final _formKey = GlobalKey<FormState>();
   String? username, email, password, confirmPassword;
-  String _tempPassword = ''; // Temporary password variable
+  String _tempPassword = '';
 
   final UserController _userController = UserController();
 
@@ -50,7 +51,7 @@ class _SignupPageState extends State<SignupPage> {
                   return null;
                 },
                 onChanged: (value) {
-                  _tempPassword = value; // Update temp password
+                  _tempPassword = value;
                 },
                 onSaved: (value) => password = value,
               ),
@@ -85,25 +86,23 @@ class _SignupPageState extends State<SignupPage> {
     if (_formKey.currentState!.validate()) {
       _formKey.currentState!.save();
 
-      try {
-        UserModel? newUser =
-            await _userController.signup(email!, password!, username!);
+      UserModel? newUser =
+          await _userController.signup(email!, password!, username!);
 
-        if (newUser != null) {
-          ScaffoldMessenger.of(context).showSnackBar(
-            SnackBar(
-                content:
-                    Text('Signup successful! Welcome ${newUser.username}')),
-          );
-          Navigator.pushReplacementNamed(context, '/friends');
-        } else {
-          ScaffoldMessenger.of(context).showSnackBar(
-            SnackBar(content: Text('Signup failed. Please try again.')),
-          );
-        }
-      } catch (e) {
+      if (newUser != null) {
         ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text('An error occurred: $e')),
+          SnackBar(
+              content: Text('Signup successful! Welcome ${newUser.username}')),
+        );
+        Navigator.pushReplacement(
+          context,
+          MaterialPageRoute(
+            builder: (context) => FriendsListPage(currentUserId: newUser.uid),
+          ),
+        );
+      } else {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text('Signup failed. Please try again.')),
         );
       }
     }

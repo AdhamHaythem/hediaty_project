@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'controllers/user_controller.dart';
 import 'models/user_model.dart';
+import 'friends_list_page.dart';
 
 class SigninPage extends StatefulWidget {
   @override
@@ -66,7 +67,13 @@ class _SigninPageState extends State<SigninPage> {
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(content: Text('Welcome back, ${loggedInUser.username}!')),
         );
-        Navigator.pushReplacementNamed(context, '/friends');
+        Navigator.pushReplacement(
+          context,
+          MaterialPageRoute(
+            builder: (context) =>
+                FriendsListPage(currentUserId: loggedInUser.uid),
+          ),
+        );
       } else {
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(

@@ -1,7 +1,7 @@
 class EventModel {
   final String id;
   final String name;
-  final String date; // Format: YYYY-MM-DD
+  final String date;
   final String location;
   final String description;
 
@@ -13,10 +13,8 @@ class EventModel {
     required this.description,
   });
 
-  // Convert EventModel to Map for Firestore/Realtime DB
   Map<String, dynamic> toMap() {
     return {
-      'id': id,
       'name': name,
       'date': date,
       'location': location,
@@ -24,7 +22,6 @@ class EventModel {
     };
   }
 
-  // Create an EventModel from Map (retrieved from Firebase)
   factory EventModel.fromMap(String id, Map<String, dynamic> data) {
     return EventModel(
       id: id,
