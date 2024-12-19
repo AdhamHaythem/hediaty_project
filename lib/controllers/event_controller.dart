@@ -55,6 +55,19 @@ class EventController {
         .add(gift.toMap());
   }
 
+  // Update a gift for a specific event
+  Future<void> updateGift(
+      String userId, String eventId, GiftModel updatedGift) async {
+    await _firestore
+        .collection('users')
+        .doc(userId)
+        .collection('events')
+        .doc(eventId)
+        .collection('gifts')
+        .doc(updatedGift.id)
+        .update(updatedGift.toMap());
+  }
+
   // Delete a gift from a specific event
   Future<void> deleteGift(String userId, String eventId, String giftId) async {
     await _firestore

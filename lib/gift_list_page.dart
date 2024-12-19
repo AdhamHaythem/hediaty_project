@@ -3,10 +3,15 @@ import '../controllers/event_controller.dart';
 import '../models/gift_model.dart';
 
 class GiftListPage extends StatefulWidget {
-  final String userId;
+  final String userId; // Current user's ID
   final String eventId;
+  final String ownerId; // Owner of the event
 
-  GiftListPage({required this.userId, required this.eventId});
+  GiftListPage({
+    required this.userId,
+    required this.eventId,
+    required this.ownerId,
+  });
 
   @override
   _GiftListPageState createState() => _GiftListPageState();
@@ -24,165 +29,113 @@ class _GiftListPageState extends State<GiftListPage> {
 
   Future<void> _loadGifts() async {
     final eventGifts =
-        await _eventController.fetchEventGifts(widget.userId, widget.eventId);
+        await _eventController.fetchEventGifts(widget.ownerId, widget.eventId);
     setState(() {
       gifts = eventGifts;
     });
   }
 
-  void _addGift() {
-    final nameController = TextEditingController();
-    final categoryController = TextEditingController();
-    final priceController = TextEditingController();
-    final descriptionController = TextEditingController();
-    String status = 'available'; // Default status
+  void _editGift(GiftModel gift) {
+    final nameController = TextEditingController(text: gift.name);
+    final categoryController = TextEditingController(text: gift.category);
+    final priceController = TextEditingController(text: gift.price.toString());
+    final descriptionController = TextEditingController(text: gift.description);
 
-    showModalBottomSheet(
+    showDialog(
       context: context,
-      isScrollControlled: true,
-      shape: RoundedRectangleBorder(
-        borderRadius: BorderRadius.vertical(top: Radius.circular(20)),
-      ),
       builder: (context) {
-        return Padding(
-          padding: EdgeInsets.fromLTRB(
-              16, 16, 16, MediaQuery.of(context).viewInsets.bottom + 16),
-          child: SingleChildScrollView(
+        return AlertDialog(
+          title: Text('Edit Gift'),
+          content: SingleChildScrollView(
             child: Column(
-              crossAxisAlignment: CrossAxisAlignment.stretch,
               children: [
-                Text(
-                  'Add New Gift',
-                  style: TextStyle(fontSize: 20, fontWeight: FontWeight.bold),
-                  textAlign: TextAlign.center,
-                ),
-                SizedBox(height: 16),
                 TextField(
                   controller: nameController,
-                  decoration: InputDecoration(
-                    labelText: 'Gift Name',
-                    prefixIcon: Icon(Icons.card_giftcard),
-                    border: OutlineInputBorder(
-                        borderRadius: BorderRadius.circular(12)),
-                  ),
+                  decoration: InputDecoration(labelText: 'Gift Name'),
                 ),
-                SizedBox(height: 16),
                 TextField(
                   controller: categoryController,
-                  decoration: InputDecoration(
-                    labelText: 'Category',
-                    prefixIcon: Icon(Icons.category),
-                    border: OutlineInputBorder(
-                        borderRadius: BorderRadius.circular(12)),
-                  ),
+                  decoration: InputDecoration(labelText: 'Category'),
                 ),
-                SizedBox(height: 16),
                 TextField(
                   controller: priceController,
                   keyboardType: TextInputType.number,
-                  decoration: InputDecoration(
-                    labelText: 'Price',
-                    prefixIcon: Icon(Icons.attach_money),
-                    border: OutlineInputBorder(
-                        borderRadius: BorderRadius.circular(12)),
-                  ),
+                  decoration: InputDecoration(labelText: 'Price'),
                 ),
-                SizedBox(height: 16),
                 TextField(
                   controller: descriptionController,
-                  maxLines: 3,
-                  decoration: InputDecoration(
-                    labelText: 'Description',
-                    prefixIcon: Icon(Icons.description),
-                    border: OutlineInputBorder(
-                        borderRadius: BorderRadius.circular(12)),
-                  ),
-                ),
-                SizedBox(height: 16),
-                DropdownButtonFormField<String>(
-                  value: status,
-                  items: ['available', 'pledged', 'purchased']
-                      .map((status) => DropdownMenuItem(
-                            value: status,
-                            child: Text(status.toUpperCase()),
-                          ))
-                      .toList(),
-                  onChanged: (value) {
-                    if (value != null) {
-                      status = value;
-                    }
-                  },
-                  decoration: InputDecoration(
-                    labelText: 'Status',
-                    border: OutlineInputBorder(
-                        borderRadius: BorderRadius.circular(12)),
-                  ),
-                ),
-                SizedBox(height: 24),
-                ElevatedButton(
-                  onPressed: () async {
-                    if (nameController.text.isEmpty ||
-                        categoryController.text.isEmpty ||
-                        priceController.text.isEmpty) {
-                      ScaffoldMessenger.of(context).showSnackBar(
-                        SnackBar(content: Text('Please fill out all fields!')),
-                      );
-                      return;
-                    }
-
-                    final price = double.tryParse(priceController.text);
-                    if (price == null) {
-                      ScaffoldMessenger.of(context).showSnackBar(
-                        SnackBar(content: Text('Please enter a valid price!')),
-                      );
-                      return;
-                    }
-
-                    final newGift = GiftModel(
-                      id: '', // Auto-generated by Firestore
-                      name: nameController.text,
-                      category: categoryController.text,
-                      price: price,
-                      status: status,
-                      description: descriptionController.text,
-                    );
-
-                    await _eventController.addGift(
-                        widget.userId, widget.eventId, newGift);
-                    Navigator.pop(context);
-                    _loadGifts(); // Refresh gift list
-                  },
-                  child: Text('Add Gift'),
-                  style: ElevatedButton.styleFrom(
-                    padding: EdgeInsets.symmetric(vertical: 16),
-                    shape: RoundedRectangleBorder(
-                      borderRadius: BorderRadius.circular(12),
-                    ),
-                  ),
+                  decoration: InputDecoration(labelText: 'Description'),
                 ),
               ],
             ),
           ),
+          actions: [
+            TextButton(
+              onPressed: () async {
+                final updatedGift = gift.copyWith(
+                  name: nameController.text,
+                  category: categoryController.text,
+                  price: double.parse(priceController.text),
+                  description: descriptionController.text,
+                );
+                await _eventController.updateGift(
+                  widget.ownerId,
+                  widget.eventId,
+                  updatedGift,
+                );
+                Navigator.pop(context);
+                _loadGifts();
+              },
+              child: Text('Save'),
+            ),
+            TextButton(
+              onPressed: () => Navigator.pop(context),
+              child: Text('Cancel'),
+            ),
+          ],
         );
       },
     );
+  }
+
+  void _pledgeGift(GiftModel gift) async {
+    if (gift.status != 'available') {
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text('This gift is already pledged or purchased.')),
+      );
+      return;
+    }
+
+    final updatedGift = gift.copyWith(status: 'pledged');
+    await _eventController.updateGift(
+        widget.ownerId, widget.eventId, updatedGift);
+    ScaffoldMessenger.of(context).showSnackBar(
+      SnackBar(content: Text('You pledged to buy this gift!')),
+    );
+    _loadGifts();
   }
 
   @override
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
-        title: Text('Gifts'),
+        title: Text('Gift List'),
         actions: [
-          IconButton(
-            icon: Icon(Icons.add),
-            onPressed: _addGift,
-          ),
+          if (widget.userId == widget.ownerId)
+            IconButton(
+              icon: Icon(Icons.add),
+              onPressed: () {
+                // Logic to add a new gift
+              },
+            ),
         ],
       ),
       body: gifts.isEmpty
           ? Center(
-              child: Text('No gifts found. Add a gift to this event!'),
+              child: Text(
+                'No gifts found. Add some gifts!',
+                style: TextStyle(fontSize: 18, color: Colors.grey),
+              ),
             )
           : ListView.builder(
               itemCount: gifts.length,
@@ -190,11 +143,27 @@ class _GiftListPageState extends State<GiftListPage> {
                 final gift = gifts[index];
                 return Card(
                   margin: EdgeInsets.symmetric(vertical: 8, horizontal: 16),
+                  elevation: 4,
+                  shape: RoundedRectangleBorder(
+                    borderRadius: BorderRadius.circular(12),
+                  ),
                   child: ListTile(
-                    title: Text(gift.name),
+                    title: Text(
+                      gift.name,
+                      style:
+                          TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
+                    ),
                     subtitle: Text(
                         '${gift.category} - \$${gift.price.toStringAsFixed(2)}'),
-                    trailing: Icon(Icons.arrow_forward_ios),
+                    trailing: widget.userId == widget.ownerId
+                        ? IconButton(
+                            icon: Icon(Icons.edit, color: Colors.blue),
+                            onPressed: () => _editGift(gift),
+                          )
+                        : ElevatedButton(
+                            child: Text('Pledge'),
+                            onPressed: () => _pledgeGift(gift),
+                          ),
                   ),
                 );
               },

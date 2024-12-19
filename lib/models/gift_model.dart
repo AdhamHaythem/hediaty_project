@@ -35,4 +35,23 @@ class GiftModel {
       description: data['description'] ?? '',
     );
   }
+
+  // Add the copyWith method
+  GiftModel copyWith({
+    String? id,
+    String? name,
+    String? category,
+    double? price,
+    String? status,
+    String? description,
+  }) {
+    return GiftModel(
+      id: id ?? this.id,
+      name: name ?? this.name,
+      category: category ?? this.category,
+      price: price ?? this.price,
+      status: status ?? this.status,
+      description: description ?? this.description,
+    );
+  }
 }

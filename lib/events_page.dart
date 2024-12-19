@@ -212,7 +212,9 @@ class _EventsPageState extends State<EventsPage> {
                         context,
                         MaterialPageRoute(
                           builder: (context) => GiftListPage(
-                              userId: widget.userId, eventId: event.id),
+                              userId: widget.userId,
+                              eventId: event.id,
+                              ownerId: widget.userId), // Passing ownerId
                         ),
                       );
                     },
