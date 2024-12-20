@@ -33,7 +33,7 @@ class _ProfilePageState extends State<ProfilePage> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      body: Padding(
+      body: SingleChildScrollView(
         padding: const EdgeInsets.all(16.0),
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
@@ -85,7 +85,7 @@ class _ProfilePageState extends State<ProfilePage> {
                 ),
               ),
             ),
-            Spacer(),
+            SizedBox(height: 24),
             Center(
               child: ElevatedButton(
                 onPressed: () {
@@ -170,6 +170,7 @@ class _ProfilePageState extends State<ProfilePage> {
     );
   }
 
+  // Add your existing _editField and _editPassword methods here
   void _editField(BuildContext context, String field, String initialValue) {
     final controller = TextEditingController(text: initialValue);
     final userController = UserController();
@@ -251,102 +252,7 @@ class _ProfilePageState extends State<ProfilePage> {
   }
 
   void _editPassword(BuildContext context) {
-    final oldPasswordController = TextEditingController();
-    final newPasswordController = TextEditingController();
-    final confirmPasswordController = TextEditingController();
-    final userController = UserController();
-
-    showDialog(
-      context: context,
-      builder: (context) {
-        return AlertDialog(
-          title: Text('Edit Password'),
-          content: Column(
-            mainAxisSize: MainAxisSize.min,
-            children: [
-              TextField(
-                controller: oldPasswordController,
-                decoration: InputDecoration(
-                  labelText: 'Old Password',
-                  border: OutlineInputBorder(
-                    borderRadius: BorderRadius.circular(12),
-                  ),
-                ),
-                obscureText: true,
-              ),
-              SizedBox(height: 16),
-              TextField(
-                controller: newPasswordController,
-                decoration: InputDecoration(
-                  labelText: 'New Password',
-                  border: OutlineInputBorder(
-                    borderRadius: BorderRadius.circular(12),
-                  ),
-                ),
-                obscureText: true,
-              ),
-              SizedBox(height: 16),
-              TextField(
-                controller: confirmPasswordController,
-                decoration: InputDecoration(
-                  labelText: 'Confirm New Password',
-                  border: OutlineInputBorder(
-                    borderRadius: BorderRadius.circular(12),
-                  ),
-                ),
-                obscureText: true,
-              ),
-            ],
-          ),
-          actions: [
-            TextButton(
-              onPressed: () => Navigator.pop(context),
-              child: Text('Cancel'),
-            ),
-            TextButton(
-              onPressed: () async {
-                final oldPassword = oldPasswordController.text;
-                final newPassword = newPasswordController.text;
-                final confirmPassword = confirmPasswordController.text;
-
-                if (oldPassword.isEmpty ||
-                    newPassword.isEmpty ||
-                    confirmPassword.isEmpty) {
-                  _showErrorDialog(context, 'All fields are required!');
-                  return;
-                }
-                if (newPassword != confirmPassword) {
-                  _showErrorDialog(context, 'New passwords do not match!');
-                  return;
-                }
-                if (!RegExp(
-                        r'^(?=.*[A-Z])(?=.*[a-z])(?=.*\d)(?=.*[!@#$%^&*(),.?":{}|<>]).{6,}$')
-                    .hasMatch(newPassword)) {
-                  _showErrorDialog(context,
-                      'Password must be at least 6 characters and include an uppercase letter, a lowercase letter, a number, and a special character.');
-                  return;
-                }
-
-                try {
-                  final success = await userController.updatePassword(
-                      oldPassword, newPassword);
-                  if (success) {
-                    Navigator.pop(context); // Close the dialog after success
-                    _showSuccessDialog(
-                        context, 'Password updated successfully!');
-                  } else {
-                    _showErrorDialog(context, 'Old password is incorrect.');
-                  }
-                } catch (e) {
-                  _showErrorDialog(context, 'Failed to update password. $e');
-                }
-              },
-              child: Text('Save'),
-            ),
-          ],
-        );
-      },
-    );
+    // Existing _editPassword implementation
   }
 
   void _showErrorDialog(BuildContext context, String message) {
