@@ -39,56 +39,132 @@ class _GiftListPageState extends State<GiftListPage> {
     });
   }
 
-  void _pledgeGift(GiftModel gift) async {
-    if (gift.status != 'available') {
+  void _addGift() {
+    if (widget.userId != widget.ownerId) {
       ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text('This gift is already pledged.')),
+        SnackBar(content: Text('Only the event owner can add gifts.')),
       );
       return;
     }
 
-    await _giftController.updateGiftStatus(
-      widget.ownerId,
-      widget.eventId,
-      gift.id,
-      'pledged',
-      widget.userId, // Add user ID who pledged
-    );
-    ScaffoldMessenger.of(context).showSnackBar(
-      SnackBar(content: Text('You pledged to buy this gift!')),
-    );
-    _loadGifts();
-  }
+    final nameController = TextEditingController();
+    final categoryController = TextEditingController();
+    final priceController = TextEditingController();
+    final descriptionController = TextEditingController();
 
-  void _unpledgeGift(GiftModel gift) async {
-    if (gift.status != 'pledged' || gift.pledgedBy != widget.userId) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text('You cannot unpledge this gift.')),
-      );
-      return;
-    }
+    showModalBottomSheet(
+      context: context,
+      isScrollControlled: true,
+      shape: RoundedRectangleBorder(
+        borderRadius: BorderRadius.vertical(top: Radius.circular(20)),
+      ),
+      builder: (context) {
+        return Padding(
+          padding: EdgeInsets.fromLTRB(
+            16,
+            16,
+            16,
+            MediaQuery.of(context).viewInsets.bottom + 16,
+          ),
+          child: SingleChildScrollView(
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              crossAxisAlignment: CrossAxisAlignment.stretch,
+              children: [
+                Text(
+                  'Add New Gift',
+                  style: TextStyle(fontSize: 20, fontWeight: FontWeight.bold),
+                  textAlign: TextAlign.center,
+                ),
+                SizedBox(height: 16),
+                TextField(
+                  controller: nameController,
+                  decoration: InputDecoration(
+                    labelText: 'Gift Name',
+                    prefixIcon: Icon(Icons.card_giftcard),
+                    border: OutlineInputBorder(
+                      borderRadius: BorderRadius.circular(12),
+                    ),
+                  ),
+                ),
+                SizedBox(height: 16),
+                TextField(
+                  controller: categoryController,
+                  decoration: InputDecoration(
+                    labelText: 'Category',
+                    prefixIcon: Icon(Icons.category),
+                    border: OutlineInputBorder(
+                      borderRadius: BorderRadius.circular(12),
+                    ),
+                  ),
+                ),
+                SizedBox(height: 16),
+                TextField(
+                  controller: priceController,
+                  keyboardType: TextInputType.number,
+                  decoration: InputDecoration(
+                    labelText: 'Price',
+                    prefixIcon: Icon(Icons.attach_money),
+                    border: OutlineInputBorder(
+                      borderRadius: BorderRadius.circular(12),
+                    ),
+                  ),
+                ),
+                SizedBox(height: 16),
+                TextField(
+                  controller: descriptionController,
+                  maxLines: 3,
+                  decoration: InputDecoration(
+                    labelText: 'Description',
+                    prefixIcon: Icon(Icons.description),
+                    border: OutlineInputBorder(
+                      borderRadius: BorderRadius.circular(12),
+                    ),
+                  ),
+                ),
+                SizedBox(height: 24),
+                ElevatedButton(
+                  onPressed: () async {
+                    if (nameController.text.isEmpty ||
+                        categoryController.text.isEmpty ||
+                        priceController.text.isEmpty) {
+                      ScaffoldMessenger.of(context).showSnackBar(
+                        SnackBar(content: Text('Please fill out all fields!')),
+                      );
+                      return;
+                    }
 
-    await _giftController.updateGiftStatus(
-      widget.ownerId,
-      widget.eventId,
-      gift.id,
-      'available',
-      null, // Reset pledgedBy
+                    final newGift = GiftModel(
+                      id: '',
+                      name: nameController.text,
+                      category: categoryController.text,
+                      price: double.parse(priceController.text),
+                      status: 'available',
+                      description: descriptionController.text,
+                    );
+
+                    await _giftController.addGift(
+                        widget.ownerId, widget.eventId, newGift);
+                    Navigator.pop(context);
+                    _loadGifts();
+                  },
+                  child: Text('Add Gift'),
+                  style: ElevatedButton.styleFrom(
+                    padding: EdgeInsets.symmetric(vertical: 16),
+                    shape: RoundedRectangleBorder(
+                      borderRadius: BorderRadius.circular(12),
+                    ),
+                  ),
+                ),
+              ],
+            ),
+          ),
+        );
+      },
     );
-    ScaffoldMessenger.of(context).showSnackBar(
-      SnackBar(content: Text('You have unpledged this gift.')),
-    );
-    _loadGifts();
   }
 
   void _editGift(GiftModel gift) {
-    if (widget.userId != widget.ownerId) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text('Only the event owner can edit gifts.')),
-      );
-      return;
-    }
-
     final nameController = TextEditingController(text: gift.name);
     final categoryController = TextEditingController(text: gift.category);
     final priceController = TextEditingController(text: gift.price.toString());
@@ -136,7 +212,7 @@ class _GiftListPageState extends State<GiftListPage> {
                 final updatedGift = gift.copyWith(
                   name: nameController.text,
                   category: categoryController.text,
-                  price: double.parse(priceController.text),
+                  price: double.tryParse(priceController.text) ?? gift.price,
                   description: descriptionController.text,
                 );
 
@@ -168,6 +244,48 @@ class _GiftListPageState extends State<GiftListPage> {
     _loadGifts();
   }
 
+  void _pledgeGift(GiftModel gift) async {
+    if (gift.status != 'available') {
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text('This gift is already pledged.')),
+      );
+      return;
+    }
+
+    await _giftController.updateGiftStatus(
+      widget.ownerId,
+      widget.eventId,
+      gift.id,
+      'pledged',
+      widget.userId, // Add user ID who pledged
+    );
+    ScaffoldMessenger.of(context).showSnackBar(
+      SnackBar(content: Text('You pledged to buy this gift!')),
+    );
+    _loadGifts();
+  }
+
+  void _unpledgeGift(GiftModel gift) async {
+    if (gift.status != 'pledged' || gift.pledgedBy != widget.userId) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text('You cannot unpledge this gift.')),
+      );
+      return;
+    }
+
+    await _giftController.updateGiftStatus(
+      widget.ownerId,
+      widget.eventId,
+      gift.id,
+      'available',
+      null, // Reset pledgedBy
+    );
+    ScaffoldMessenger.of(context).showSnackBar(
+      SnackBar(content: Text('You have unpledged this gift.')),
+    );
+    _loadGifts();
+  }
+
   @override
   Widget build(BuildContext context) {
     return Scaffold(
@@ -187,9 +305,7 @@ class _GiftListPageState extends State<GiftListPage> {
           if (widget.userId == widget.ownerId)
             IconButton(
               icon: Icon(Icons.add),
-              onPressed: () {
-                // Add Gift functionality
-              },
+              onPressed: _addGift,
             ),
         ],
       ),
@@ -283,6 +399,9 @@ class _GiftListPageState extends State<GiftListPage> {
                                   : Colors.green,
                               padding: EdgeInsets.symmetric(
                                   vertical: 8, horizontal: 16),
+                              shape: RoundedRectangleBorder(
+                                borderRadius: BorderRadius.circular(8),
+                              ),
                             ),
                             child: Text(
                               gift.status == 'pledged' ? 'Unpledge' : 'Pledge',

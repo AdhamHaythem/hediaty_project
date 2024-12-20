@@ -168,6 +168,129 @@ class _EventsPageState extends State<EventsPage> {
     );
   }
 
+  void _editEvent(EventModel event) {
+    final nameController = TextEditingController(text: event.name);
+    final locationController = TextEditingController(text: event.location);
+    final descriptionController =
+        TextEditingController(text: event.description);
+    DateTime? selectedDate = DateTime.parse(event.date);
+
+    showModalBottomSheet(
+      context: context,
+      isScrollControlled: true,
+      shape: RoundedRectangleBorder(
+        borderRadius: BorderRadius.vertical(top: Radius.circular(20)),
+      ),
+      builder: (context) {
+        return Padding(
+          padding: EdgeInsets.fromLTRB(
+              16, 16, 16, MediaQuery.of(context).viewInsets.bottom + 16),
+          child: SingleChildScrollView(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.stretch,
+              children: [
+                Text(
+                  'Edit Event',
+                  style: TextStyle(fontSize: 20, fontWeight: FontWeight.bold),
+                  textAlign: TextAlign.center,
+                ),
+                SizedBox(height: 16),
+                TextField(
+                  controller: nameController,
+                  decoration: InputDecoration(
+                    labelText: 'Event Name',
+                    prefixIcon: Icon(Icons.event),
+                    border: OutlineInputBorder(
+                      borderRadius: BorderRadius.circular(12),
+                    ),
+                  ),
+                ),
+                SizedBox(height: 16),
+                TextField(
+                  controller: locationController,
+                  decoration: InputDecoration(
+                    labelText: 'Location',
+                    prefixIcon: Icon(Icons.location_on),
+                    border: OutlineInputBorder(
+                      borderRadius: BorderRadius.circular(12),
+                    ),
+                  ),
+                ),
+                SizedBox(height: 16),
+                GestureDetector(
+                  onTap: () async {
+                    final pickedDate = await showDatePicker(
+                      context: context,
+                      initialDate: selectedDate!,
+                      firstDate: DateTime(2000),
+                      lastDate: DateTime(2100),
+                    );
+                    if (pickedDate != null) {
+                      setState(() {
+                        selectedDate = pickedDate;
+                      });
+                    }
+                  },
+                  child: AbsorbPointer(
+                    child: TextField(
+                      decoration: InputDecoration(
+                        labelText: selectedDate == null
+                            ? 'Select Date'
+                            : DateFormat('yyyy-MM-dd').format(selectedDate!),
+                        prefixIcon: Icon(Icons.calendar_today),
+                        border: OutlineInputBorder(
+                          borderRadius: BorderRadius.circular(12),
+                        ),
+                      ),
+                    ),
+                  ),
+                ),
+                SizedBox(height: 16),
+                TextField(
+                  controller: descriptionController,
+                  maxLines: 3,
+                  decoration: InputDecoration(
+                    labelText: 'Description',
+                    prefixIcon: Icon(Icons.description),
+                    border: OutlineInputBorder(
+                      borderRadius: BorderRadius.circular(12),
+                    ),
+                  ),
+                ),
+                SizedBox(height: 24),
+                ElevatedButton(
+                  onPressed: () async {
+                    if (nameController.text.isEmpty ||
+                        locationController.text.isEmpty ||
+                        selectedDate == null) {
+                      ScaffoldMessenger.of(context).showSnackBar(
+                        SnackBar(content: Text('Please fill out all fields!')),
+                      );
+                      return;
+                    }
+
+                    final updatedEvent = event.copyWith(
+                      name: nameController.text,
+                      date: DateFormat('yyyy-MM-dd').format(selectedDate!),
+                      location: locationController.text,
+                      description: descriptionController.text,
+                    );
+
+                    await _eventController.updateEvent(
+                        widget.userId, updatedEvent);
+                    Navigator.pop(context);
+                    _loadEvents();
+                  },
+                  child: Text('Save Changes'),
+                ),
+              ],
+            ),
+          ),
+        );
+      },
+    );
+  }
+
   @override
   Widget build(BuildContext context) {
     return Scaffold(
@@ -224,13 +347,22 @@ class _EventsPageState extends State<EventsPage> {
                       ],
                     ),
                     trailing: widget.userId == widget.ownerId
-                        ? IconButton(
-                            icon: Icon(Icons.delete, color: Colors.red),
-                            onPressed: () async {
-                              await _eventController.deleteEvent(
-                                  widget.ownerId, event.id);
-                              _loadEvents();
-                            },
+                        ? Row(
+                            mainAxisSize: MainAxisSize.min,
+                            children: [
+                              IconButton(
+                                icon: Icon(Icons.edit, color: Colors.blue),
+                                onPressed: () => _editEvent(event),
+                              ),
+                              IconButton(
+                                icon: Icon(Icons.delete, color: Colors.red),
+                                onPressed: () async {
+                                  await _eventController.deleteEvent(
+                                      widget.ownerId, event.id);
+                                  _loadEvents();
+                                },
+                              ),
+                            ],
                           )
                         : null,
                     onTap: () {
