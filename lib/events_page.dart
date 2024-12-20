@@ -1,8 +1,8 @@
 import 'package:flutter/material.dart';
 import 'package:intl/intl.dart';
-import '../controllers/event_controller.dart';
-import '../models/event_model.dart';
-import 'gift_list_page.dart';
+import 'package:hedaity_project/controllers/event_controller.dart';
+import 'package:hedaity_project/models/event_model.dart';
+import 'package:hedaity_project/gift_list_page.dart';
 
 class EventsPage extends StatefulWidget {
   final String userId;

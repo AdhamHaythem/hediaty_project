@@ -1,5 +1,5 @@
 import 'package:flutter/material.dart';
-import '../controllers/user_controller.dart';
+import 'package:hedaity_project/controllers/user_controller.dart';
 
 class ProfilePage extends StatefulWidget {
   final String userId;

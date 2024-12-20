@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
-import '../controllers/gift_controller.dart';
-import '../models/gift_model.dart';
+import 'package:hedaity_project/models/gift_model.dart';
+import 'package:hedaity_project/controllers/gift_controller.dart';
 
 class GiftListPage extends StatefulWidget {
   final String userId;

@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
-import 'events_page.dart';
-import 'profile_page.dart';
-import '../controllers/user_controller.dart';
+import 'package:hedaity_project/events_page.dart';
+import 'package:hedaity_project/profile_page.dart';
+import 'package:hedaity_project/controllers/user_controller.dart';
 
 class FriendsListPage extends StatefulWidget {
   final String currentUserId;

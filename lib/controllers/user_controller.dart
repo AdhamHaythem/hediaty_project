@@ -1,7 +1,7 @@
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_auth/firebase_auth.dart';
-import '../models/user_model.dart';
-import '../db_helper.dart';
+import 'package:hedaity_project/models/user_model.dart';
+import 'package:hedaity_project/db_helper.dart';
 
 class UserController {
   final FirebaseAuth _auth = FirebaseAuth.instance;

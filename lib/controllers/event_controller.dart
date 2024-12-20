@@ -1,5 +1,5 @@
 import 'package:cloud_firestore/cloud_firestore.dart';
-import '../models/event_model.dart';
+import 'package:hedaity_project/models/event_model.dart';
 
 class EventController {
   final FirebaseFirestore _firestore = FirebaseFirestore.instance;

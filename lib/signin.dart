@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
-import 'controllers/user_controller.dart';
-import 'models/user_model.dart';
-import 'friends_list_page.dart';
+import 'package:hedaity_project/controllers/user_controller.dart';
+import 'package:hedaity_project/models/user_model.dart';
+import 'package:hedaity_project/friends_list_page.dart';
 
 class SigninPage extends StatefulWidget {
   @override
@@ -103,7 +103,7 @@ class _SigninPageState extends State<SigninPage> {
       UserModel? loggedInUser = await _userController.signin(email!, password!);
 
       if (loggedInUser != null) {
-        await _userController.saveUser(loggedInUser);
+        //await _userController.saveUser(loggedInUser);
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(content: Text('Welcome back, ${loggedInUser.username}!')),
         );

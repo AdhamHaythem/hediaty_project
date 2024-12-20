@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
-import 'controllers/user_controller.dart';
-import 'models/user_model.dart';
-import 'friends_list_page.dart';
+import 'package:hedaity_project/controllers/user_controller.dart';
+import 'package:hedaity_project/models/user_model.dart';
+import 'package:hedaity_project/friends_list_page.dart';
 
 class SignupPage extends StatefulWidget {
   @override
@@ -20,7 +20,7 @@ class _SignupPageState extends State<SignupPage> {
     return Scaffold(
       appBar: AppBar(
         title: Text('Signup'),
-        backgroundColor: Colors.greenAccent,
+        backgroundColor: Colors.blueAccent,
       ),
       body: Padding(
         padding: const EdgeInsets.symmetric(horizontal: 24.0, vertical: 16.0),
@@ -34,7 +34,7 @@ class _SignupPageState extends State<SignupPage> {
                 style: TextStyle(
                   fontSize: 24,
                   fontWeight: FontWeight.bold,
-                  color: Colors.greenAccent,
+                  color: Colors.blueAccent,
                 ),
                 textAlign: TextAlign.center,
               ),
@@ -126,7 +126,7 @@ class _SignupPageState extends State<SignupPage> {
                   shape: RoundedRectangleBorder(
                     borderRadius: BorderRadius.circular(12),
                   ),
-                  backgroundColor: Colors.greenAccent,
+                  backgroundColor: Colors.blueAccent,
                 ),
                 child: Text(
                   'Signup',

@@ -1,11 +1,11 @@
 import 'package:flutter/material.dart';
 import 'package:firebase_core/firebase_core.dart';
-import 'signin.dart';
-import 'signup.dart';
-import 'friends_list_page.dart';
-import 'events_page.dart';
-import 'gift_list_page.dart';
-import 'profile_page.dart';
+import 'package:hedaity_project/signin.dart';
+import 'package:hedaity_project/signup.dart';
+import 'package:hedaity_project/friends_list_page.dart';
+import 'package:hedaity_project/events_page.dart';
+import 'package:hedaity_project/gift_list_page.dart';
+import 'package:hedaity_project/profile_page.dart';
 
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
@@ -28,6 +28,7 @@ class HedieatyApp extends StatelessWidget {
             return MaterialPageRoute(builder: (context) => SignupPage());
 
           case '/signin':
+          case '/':
             return MaterialPageRoute(builder: (context) => SigninPage());
 
           case '/friends':

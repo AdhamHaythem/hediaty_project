@@ -1,5 +1,5 @@
 import 'package:cloud_firestore/cloud_firestore.dart';
-import '../models/gift_model.dart';
+import 'package:hedaity_project/models/gift_model.dart';
 
 class GiftController {
   final FirebaseFirestore _firestore = FirebaseFirestore.instance;
