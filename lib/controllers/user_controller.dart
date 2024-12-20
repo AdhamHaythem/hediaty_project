@@ -70,12 +70,71 @@ class UserController {
     return null;
   }
 
-  // Logout Method
+  // Update user field (username or email)
+  Future<void> updateUserField(
+      String userId, String field, String value) async {
+    try {
+      if (field == 'email') {
+        // Update email in FirebaseAuth
+        User? user = _auth.currentUser;
+        if (user != null) {
+          await user.updateEmail(value);
+        }
+      }
+      // Update field in Firestore
+      await _firestore.collection('users').doc(userId).update({field: value});
+    } catch (e) {
+      throw Exception('Failed to update $field: $e');
+    }
+  }
+
+  // Update user password
+  Future<bool> updatePassword(
+      String userId, String oldPassword, String newPassword) async {
+    try {
+      User? user = _auth.currentUser;
+      if (user == null) return false;
+
+      // Reauthenticate the user
+      final credential = EmailAuthProvider.credential(
+        email: user.email ?? '',
+        password: oldPassword,
+      );
+      await user.reauthenticateWithCredential(credential);
+
+      // Update the password
+      await user.updatePassword(newPassword);
+      return true;
+    } catch (e) {
+      print('Failed to update password: $e');
+      return false;
+    }
+  }
+
+  // Log out the user
   Future<void> logout() async {
     try {
       await _auth.signOut();
     } catch (e) {
-      print('Logout Error: $e');
+      throw Exception('Failed to log out: $e');
+    }
+  }
+
+  Future<Map<String, dynamic>> fetchUserDetails(String userId) async {
+    try {
+      final userDoc = await _firestore.collection('users').doc(userId).get();
+      if (userDoc.exists) {
+        final data = userDoc.data();
+        return {
+          'username': data?['username'] ?? '',
+          'email': data?['email'] ?? '',
+        };
+      } else {
+        throw Exception('User not found');
+      }
+    } catch (e) {
+      print('Error fetching user details: $e');
+      return {'username': '', 'email': ''};
     }
   }
 

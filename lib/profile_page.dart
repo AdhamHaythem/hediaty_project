@@ -1,102 +1,382 @@
 import 'package:flutter/material.dart';
+import '../controllers/user_controller.dart';
 
-class ProfilePage extends StatefulWidget {
-  @override
-  _ProfilePageState createState() => _ProfilePageState();
-}
+class ProfilePage extends StatelessWidget {
+  final String userId;
+  final String username;
+  final String email;
 
-class _ProfilePageState extends State<ProfilePage> {
-  TextEditingController nameController =
-      TextEditingController(text: 'User Name');
-  TextEditingController emailController =
-      TextEditingController(text: 'user@example.com');
-  bool notificationsEnabled = true;
-
-  List<Map<String, dynamic>> userEvents = [
-    {
-      'name': 'My Birthday Party',
-      'gifts': [
-        {'name': 'Watch', 'category': 'Accessory', 'pledged': false},
-        {'name': 'Book', 'category': 'Reading', 'pledged': true},
-      ]
-    },
-    {
-      'name': 'Anniversary Celebration',
-      'gifts': [
-        {'name': 'Flowers', 'category': 'Decoration', 'pledged': false}
-      ]
-    },
-  ];
+  const ProfilePage({
+    required this.userId,
+    required this.username,
+    required this.email,
+    Key? key,
+  }) : super(key: key);
 
   @override
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
-        title: Text('My Profile'),
-        actions: [
-          TextButton(
-            onPressed: () {
-              Navigator.pushNamed(context, '/myPledgedGifts');
-            },
-            child: Text(
-              'My Pledged Gifts',
-              style: TextStyle(color: Colors.white),
+        title: Text('Profile'),
+      ),
+      body: Padding(
+        padding: const EdgeInsets.all(16.0),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Center(
+              child: CircleAvatar(
+                radius: 50,
+                backgroundColor: Colors.blue,
+                child: Text(
+                  username.isNotEmpty ? username[0].toUpperCase() : '',
+                  style: TextStyle(fontSize: 40, color: Colors.white),
+                ),
+              ),
+            ),
+            SizedBox(height: 24),
+            Text(
+              'Username:',
+              style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
+            ),
+            Text(
+              username,
+              style: TextStyle(fontSize: 16),
+            ),
+            SizedBox(height: 16),
+            Text(
+              'Email:',
+              style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
+            ),
+            Text(
+              email,
+              style: TextStyle(fontSize: 16),
+            ),
+            SizedBox(height: 24),
+            Center(
+              child: ElevatedButton(
+                onPressed: () => _showEditOptions(context),
+                child: Text('Edit Profile'),
+                style: ElevatedButton.styleFrom(
+                  padding: EdgeInsets.symmetric(vertical: 16, horizontal: 32),
+                  shape: RoundedRectangleBorder(
+                    borderRadius: BorderRadius.circular(12),
+                  ),
+                ),
+              ),
+            ),
+            Spacer(),
+            Center(
+              child: ElevatedButton(
+                onPressed: () {
+                  showDialog(
+                    context: context,
+                    builder: (context) => AlertDialog(
+                      title: Text('Log Out'),
+                      content: Text('Are you sure you want to log out?'),
+                      actions: [
+                        TextButton(
+                          onPressed: () => Navigator.pop(context),
+                          child: Text('Cancel'),
+                        ),
+                        TextButton(
+                          onPressed: () async {
+                            final userController = UserController();
+                            await userController.logout();
+                            Navigator.pop(context);
+                            Navigator.pushReplacementNamed(context, '/signup');
+                          },
+                          child: Text('Log Out'),
+                        ),
+                      ],
+                    ),
+                  );
+                },
+                child: Text('Log Out'),
+                style: ElevatedButton.styleFrom(
+                  padding: EdgeInsets.symmetric(vertical: 16, horizontal: 32),
+                  shape: RoundedRectangleBorder(
+                    borderRadius: BorderRadius.circular(12),
+                  ),
+                ),
+              ),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+
+  void _showEditOptions(BuildContext context) {
+    showModalBottomSheet(
+      context: context,
+      shape: RoundedRectangleBorder(
+        borderRadius: BorderRadius.vertical(top: Radius.circular(20)),
+      ),
+      builder: (context) {
+        return Padding(
+          padding: const EdgeInsets.all(16.0),
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              Text(
+                'Edit Profile',
+                style: TextStyle(fontSize: 20, fontWeight: FontWeight.bold),
+              ),
+              SizedBox(height: 16),
+              ListTile(
+                leading: Icon(Icons.person),
+                title: Text('Edit Username'),
+                onTap: () => _editField(context, 'Username', username),
+              ),
+              ListTile(
+                leading: Icon(Icons.email),
+                title: Text('Edit Email'),
+                onTap: () => _editField(context, 'Email', email),
+              ),
+              ListTile(
+                leading: Icon(Icons.lock),
+                title: Text('Edit Password'),
+                onTap: () => _editPassword(context),
+              ),
+            ],
+          ),
+        );
+      },
+    );
+  }
+
+  void _editField(BuildContext context, String field, String initialValue) {
+    final controller = TextEditingController(text: initialValue);
+    final userController = UserController();
+    showDialog(
+      context: context,
+      builder: (context) {
+        return AlertDialog(
+          title: Text('Edit $field'),
+          content: TextField(
+            controller: controller,
+            decoration: InputDecoration(
+              labelText: 'Enter new $field',
+              border: OutlineInputBorder(
+                borderRadius: BorderRadius.circular(12),
+              ),
             ),
           ),
-        ],
-      ),
-      body: ListView(
-        padding: EdgeInsets.all(16.0),
-        children: [
-          Text('Personal Information',
-              style: TextStyle(fontWeight: FontWeight.bold)),
-          TextFormField(
-            controller: nameController,
-            decoration: InputDecoration(labelText: 'Name'),
-          ),
-          TextFormField(
-            controller: emailController,
-            decoration: InputDecoration(labelText: 'Email'),
-          ),
-          SwitchListTile(
-            title: Text('Enable Notifications'),
-            value: notificationsEnabled,
-            onChanged: (val) {
-              setState(() {
-                notificationsEnabled = val;
-              });
-            },
-          ),
-          SizedBox(height: 20),
-          Text('My Created Events',
-              style: TextStyle(fontWeight: FontWeight.bold)),
-          ...userEvents.map((event) {
-            return ExpansionTile(
-              title: Text(event['name']),
-              children: [
-                ...event['gifts'].map<Widget>((gift) {
-                  return ListTile(
-                    title: Text(gift['name']),
-                    subtitle: Text(gift['category']),
-                    trailing: gift['pledged']
-                        ? Icon(Icons.check_circle, color: Colors.green)
-                        : Icon(Icons.circle_outlined, color: Colors.grey),
+          actions: [
+            TextButton(
+              onPressed: () => Navigator.pop(context),
+              child: Text('Cancel'),
+            ),
+            TextButton(
+              onPressed: () async {
+                if (controller.text.isEmpty) {
+                  showDialog(
+                    context: context,
+                    builder: (context) => AlertDialog(
+                      title: Text('Error'),
+                      content: Text('$field cannot be empty!'),
+                      actions: [
+                        TextButton(
+                          onPressed: () => Navigator.pop(context),
+                          child: Text('OK'),
+                        ),
+                      ],
+                    ),
                   );
-                }).toList()
-              ],
-            );
-          }).toList(),
-        ],
-      ),
-      floatingActionButton: FloatingActionButton(
-        onPressed: () {
-          // Save profile changes logic
-          ScaffoldMessenger.of(context).showSnackBar(
-            SnackBar(content: Text('Profile Updated')),
-          );
-        },
-        child: Icon(Icons.save),
-      ),
+                  return;
+                }
+
+                try {
+                  await userController.updateUserField(
+                      userId, field.toLowerCase(), controller.text);
+                  showDialog(
+                    context: context,
+                    builder: (context) => AlertDialog(
+                      title: Text('Success'),
+                      content: Text('$field updated successfully!'),
+                      actions: [
+                        TextButton(
+                          onPressed: () => Navigator.pop(context),
+                          child: Text('OK'),
+                        ),
+                      ],
+                    ),
+                  );
+                } catch (e) {
+                  showDialog(
+                    context: context,
+                    builder: (context) => AlertDialog(
+                      title: Text('Error'),
+                      content: Text('Failed to update $field. $e'),
+                      actions: [
+                        TextButton(
+                          onPressed: () => Navigator.pop(context),
+                          child: Text('OK'),
+                        ),
+                      ],
+                    ),
+                  );
+                }
+                Navigator.pop(context);
+              },
+              child: Text('Save'),
+            ),
+          ],
+        );
+      },
+    );
+  }
+
+  void _editPassword(BuildContext context) {
+    final oldPasswordController = TextEditingController();
+    final newPasswordController = TextEditingController();
+    final confirmPasswordController = TextEditingController();
+    final userController = UserController();
+
+    showDialog(
+      context: context,
+      builder: (context) {
+        return AlertDialog(
+          title: Text('Edit Password'),
+          content: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              TextField(
+                controller: oldPasswordController,
+                decoration: InputDecoration(
+                  labelText: 'Old Password',
+                  border: OutlineInputBorder(
+                    borderRadius: BorderRadius.circular(12),
+                  ),
+                ),
+                obscureText: true,
+              ),
+              SizedBox(height: 16),
+              TextField(
+                controller: newPasswordController,
+                decoration: InputDecoration(
+                  labelText: 'New Password',
+                  border: OutlineInputBorder(
+                    borderRadius: BorderRadius.circular(12),
+                  ),
+                ),
+                obscureText: true,
+              ),
+              SizedBox(height: 16),
+              TextField(
+                controller: confirmPasswordController,
+                decoration: InputDecoration(
+                  labelText: 'Confirm New Password',
+                  border: OutlineInputBorder(
+                    borderRadius: BorderRadius.circular(12),
+                  ),
+                ),
+                obscureText: true,
+              ),
+            ],
+          ),
+          actions: [
+            TextButton(
+              onPressed: () => Navigator.pop(context),
+              child: Text('Cancel'),
+            ),
+            TextButton(
+              onPressed: () async {
+                final oldPassword = oldPasswordController.text;
+                final newPassword = newPasswordController.text;
+                final confirmPassword = confirmPasswordController.text;
+
+                if (oldPassword.isEmpty ||
+                    newPassword.isEmpty ||
+                    confirmPassword.isEmpty) {
+                  showDialog(
+                    context: context,
+                    builder: (context) => AlertDialog(
+                      title: Text('Error'),
+                      content: Text('All fields are required!'),
+                      actions: [
+                        TextButton(
+                          onPressed: () => Navigator.pop(context),
+                          child: Text('OK'),
+                        ),
+                      ],
+                    ),
+                  );
+                  return;
+                }
+
+                if (newPassword != confirmPassword) {
+                  showDialog(
+                    context: context,
+                    builder: (context) => AlertDialog(
+                      title: Text('Error'),
+                      content: Text('New passwords do not match!'),
+                      actions: [
+                        TextButton(
+                          onPressed: () => Navigator.pop(context),
+                          child: Text('OK'),
+                        ),
+                      ],
+                    ),
+                  );
+                  return;
+                }
+
+                try {
+                  final success = await userController.updatePassword(
+                      userId, oldPassword, newPassword);
+                  if (success) {
+                    showDialog(
+                      context: context,
+                      builder: (context) => AlertDialog(
+                        title: Text('Success'),
+                        content: Text('Password updated successfully!'),
+                        actions: [
+                          TextButton(
+                            onPressed: () => Navigator.pop(context),
+                            child: Text('OK'),
+                          ),
+                        ],
+                      ),
+                    );
+                    Navigator.pop(context);
+                  } else {
+                    showDialog(
+                      context: context,
+                      builder: (context) => AlertDialog(
+                        title: Text('Error'),
+                        content: Text('Old password is incorrect.'),
+                        actions: [
+                          TextButton(
+                            onPressed: () => Navigator.pop(context),
+                            child: Text('OK'),
+                          ),
+                        ],
+                      ),
+                    );
+                  }
+                } catch (e) {
+                  showDialog(
+                    context: context,
+                    builder: (context) => AlertDialog(
+                      title: Text('Error'),
+                      content: Text('Failed to update password. $e'),
+                      actions: [
+                        TextButton(
+                          onPressed: () => Navigator.pop(context),
+                          child: Text('OK'),
+                        ),
+                      ],
+                    ),
+                  );
+                }
+              },
+              child: Text('Save'),
+            ),
+          ],
+        );
+      },
     );
   }
 }

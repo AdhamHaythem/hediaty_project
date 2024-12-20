@@ -15,6 +15,8 @@ class FriendsListPage extends StatefulWidget {
 class _FriendsListPageState extends State<FriendsListPage> {
   final TextEditingController searchController = TextEditingController();
   final UserController _userController = UserController();
+  String? username;
+  String? email;
 
   List<Map<String, dynamic>> friends = [];
   List<Map<String, dynamic>> friendRequests = [];
@@ -23,6 +25,16 @@ class _FriendsListPageState extends State<FriendsListPage> {
   void initState() {
     super.initState();
     _loadFriendsAndRequests();
+    _loadUserData();
+  }
+
+  Future<void> _loadUserData() async {
+    final userData =
+        await _userController.fetchUserDetails(widget.currentUserId);
+    setState(() {
+      username = userData['username'];
+      email = userData['email'];
+    });
   }
 
   Future<void> _loadFriendsAndRequests() async {
@@ -81,7 +93,11 @@ class _FriendsListPageState extends State<FriendsListPage> {
     Navigator.push(
       context,
       MaterialPageRoute(
-        builder: (context) => ProfilePage(),
+        builder: (context) => ProfilePage(
+          userId: widget.currentUserId, // Pass the current user ID
+          username: username!, // Replace with dynamic username
+          email: email!, // Replace with dynamic email
+        ),
       ),
     );
   }

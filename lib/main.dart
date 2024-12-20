@@ -57,8 +57,16 @@ class HedieatyApp extends StatelessWidget {
               ),
             );
           case '/profile':
+            final args = settings.arguments as Map<String, dynamic>;
+            final userId = args['userId'] as String;
+            final username = args['username'] as String;
+            final email = args['email'] as String;
             return MaterialPageRoute(
-              builder: (context) => ProfilePage(),
+              builder: (context) => ProfilePage(
+                userId: userId,
+                username: username,
+                email: email,
+              ),
             );
 
           default:
