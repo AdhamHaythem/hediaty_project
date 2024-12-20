@@ -1,19 +1,34 @@
 import 'package:flutter/material.dart';
 import '../controllers/user_controller.dart';
 
-class ProfilePage extends StatelessWidget {
+class ProfilePage extends StatefulWidget {
   final String userId;
   final String username;
   final String email;
   final String? imageUrl;
 
-  const ProfilePage({
+  ProfilePage({
     required this.userId,
     required this.username,
     required this.email,
     this.imageUrl,
     Key? key,
   }) : super(key: key);
+
+  @override
+  _ProfilePageState createState() => _ProfilePageState();
+}
+
+class _ProfilePageState extends State<ProfilePage> {
+  late String username;
+  late String email;
+
+  @override
+  void initState() {
+    super.initState();
+    username = widget.username;
+    email = widget.email;
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -27,10 +42,11 @@ class ProfilePage extends StatelessWidget {
               child: CircleAvatar(
                 radius: 50,
                 backgroundColor: Colors.blue,
-                backgroundImage: imageUrl != null && imageUrl!.isNotEmpty
-                    ? NetworkImage(imageUrl!)
-                    : null,
-                child: imageUrl == null || imageUrl!.isEmpty
+                backgroundImage:
+                    widget.imageUrl != null && widget.imageUrl!.isNotEmpty
+                        ? NetworkImage(widget.imageUrl!)
+                        : null,
+                child: widget.imageUrl == null || widget.imageUrl!.isEmpty
                     ? Text(
                         username.isNotEmpty ? username[0].toUpperCase() : '',
                         style: TextStyle(fontSize: 40, color: Colors.white),
@@ -180,8 +196,6 @@ class ProfilePage extends StatelessWidget {
             TextButton(
               onPressed: () async {
                 final newValue = controller.text.trim();
-
-                // Validate input
                 if (newValue.isEmpty) {
                   _showErrorDialog(context, '$field cannot be empty!');
                   return;
@@ -212,12 +226,21 @@ class ProfilePage extends StatelessWidget {
 
                 try {
                   await userController.updateUserField(
-                      userId, field.toLowerCase(), newValue);
+                      widget.userId, field.toLowerCase(), newValue);
+
+                  setState(() {
+                    if (field == 'Username') {
+                      username = newValue;
+                    } else if (field == 'Email') {
+                      email = newValue;
+                    }
+                  });
+
+                  Navigator.pop(context); // Close the dialog after success
                   _showSuccessDialog(context, '$field updated successfully!');
                 } catch (e) {
                   _showErrorDialog(context, 'Failed to update $field. $e');
                 }
-                Navigator.pop(context);
               },
               child: Text('Save'),
             ),
@@ -286,7 +309,6 @@ class ProfilePage extends StatelessWidget {
                 final newPassword = newPasswordController.text;
                 final confirmPassword = confirmPasswordController.text;
 
-                // Password validation
                 if (oldPassword.isEmpty ||
                     newPassword.isEmpty ||
                     confirmPassword.isEmpty) {
@@ -309,9 +331,9 @@ class ProfilePage extends StatelessWidget {
                   final success = await userController.updatePassword(
                       oldPassword, newPassword);
                   if (success) {
+                    Navigator.pop(context); // Close the dialog after success
                     _showSuccessDialog(
                         context, 'Password updated successfully!');
-                    Navigator.pop(context);
                   } else {
                     _showErrorDialog(context, 'Old password is incorrect.');
                   }
