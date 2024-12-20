@@ -7,8 +7,13 @@ import 'gift_list_page.dart';
 class EventsPage extends StatefulWidget {
   final String userId;
   final String ownerId;
+  final String? friendusername;
 
-  const EventsPage({required this.userId, required this.ownerId, Key? key})
+  const EventsPage(
+      {required this.userId,
+      required this.ownerId,
+      this.friendusername,
+      Key? key})
       : super(key: key);
 
   @override
@@ -295,7 +300,9 @@ class _EventsPageState extends State<EventsPage> {
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
-        title: Text('My Events'),
+        title: widget.userId == widget.ownerId
+            ? Text('My Events')
+            : Text("${widget.friendusername}'s Events"),
         actions: [
           IconButton(
             icon: Icon(Icons.sort),

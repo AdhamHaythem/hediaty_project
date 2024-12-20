@@ -15,48 +15,85 @@ class FriendsListPage extends StatefulWidget {
 class _FriendsListPageState extends State<FriendsListPage> {
   final TextEditingController searchController = TextEditingController();
   final UserController _userController = UserController();
-  String? username;
-  String? email;
 
   List<Map<String, dynamic>> friends = [];
   List<Map<String, dynamic>> friendRequests = [];
+  int _currentIndex = 0;
+  String _appBarTitle = 'Friends List';
+  String username = "";
+  String email = "";
+
+  List<Widget>? _pages;
 
   @override
   void initState() {
     super.initState();
-    _loadFriendsAndRequests();
-    _loadUserData();
+    _initializeData();
+  }
+
+  Future<void> _initializeData() async {
+    await _loadUserData();
+    await _loadFriendsAndRequests();
+    setState(() {
+      _pages = [
+        _buildFriendsList(),
+        EventsPage(userId: widget.currentUserId, ownerId: widget.currentUserId),
+        ProfilePage(
+          userId: widget.currentUserId,
+          username: username,
+          email: email,
+        ),
+      ];
+    });
   }
 
   Future<void> _loadUserData() async {
-    final userData =
-        await _userController.fetchUserDetails(widget.currentUserId);
-    setState(() {
-      username = userData['username'];
-      email = userData['email'];
-    });
+    try {
+      final userData =
+          await _userController.fetchUserDetails(widget.currentUserId);
+      setState(() {
+        username = userData['username'] ?? "Your Username";
+        email = userData['email'] ?? "your-email@example.com";
+      });
+    } catch (e) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text('Failed to load user data: $e')),
+      );
+    }
   }
 
   Future<void> _loadFriendsAndRequests() async {
-    final fetchedFriends =
-        await _userController.fetchFriendsWithEvents(widget.currentUserId);
-    final fetchedRequests =
-        await _userController.fetchFriendRequests(widget.currentUserId);
+    try {
+      final fetchedFriends =
+          await _userController.fetchFriendsWithEvents(widget.currentUserId);
+      final fetchedRequests =
+          await _userController.fetchFriendRequests(widget.currentUserId);
 
-    setState(() {
-      friends = fetchedFriends;
-      friendRequests = fetchedRequests;
-    });
+      setState(() {
+        friends = fetchedFriends;
+        friendRequests = fetchedRequests;
+      });
+    } catch (e) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text('Failed to load friends: $e')),
+      );
+    }
   }
 
   void _sendFriendRequest() async {
     final username = searchController.text.trim();
     if (username.isNotEmpty) {
-      await _userController.sendFriendRequest(widget.currentUserId, username);
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text('Friend request sent to $username!')),
-      );
-      searchController.clear();
+      try {
+        await _userController.sendFriendRequest(widget.currentUserId, username);
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text('Friend request sent to $username!')),
+        );
+        searchController.clear();
+      } catch (e) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text('Failed to send request: $e')),
+        );
+      }
     } else {
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(content: Text('Please enter a username.')),
@@ -65,231 +102,198 @@ class _FriendsListPageState extends State<FriendsListPage> {
   }
 
   void _handleRequest(String senderUserId, bool isAccepted) async {
-    await _userController.handleFriendRequest(
-        widget.currentUserId, senderUserId, isAccepted);
-    _loadFriendsAndRequests();
+    try {
+      await _userController.handleFriendRequest(
+          widget.currentUserId, senderUserId, isAccepted);
+      _loadFriendsAndRequests();
+    } catch (e) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text('Failed to handle request: $e')),
+      );
+    }
   }
 
-  void _navigateToEvents(String userId, String ownerId) {
-    Navigator.push(
-      context,
-      MaterialPageRoute(
-        builder: (context) => EventsPage(userId: userId, ownerId: ownerId),
-      ),
-    );
-  }
-
-  void _navigateToMyEvents() {
-    Navigator.push(
-      context,
-      MaterialPageRoute(
-        builder: (context) => EventsPage(
-            userId: widget.currentUserId, ownerId: widget.currentUserId),
-      ),
-    );
-  }
-
-  void _navigateToProfile() {
-    Navigator.push(
-      context,
-      MaterialPageRoute(
-        builder: (context) => ProfilePage(
-          userId: widget.currentUserId, // Pass the current user ID
-          username: username!, // Replace with dynamic username
-          email: email!, // Replace with dynamic email
-        ),
-      ),
-    );
+  void _onTabTapped(int index) {
+    setState(() {
+      _currentIndex = index;
+      _appBarTitle = index == 0
+          ? 'Friends List'
+          : index == 1
+              ? 'My Events'
+              : 'Profile';
+    });
   }
 
   @override
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
-        title: Text('Friends List'),
-        actions: [
-          IconButton(
-            icon: Icon(Icons.person),
-            onPressed: _navigateToProfile,
+        title: Text(_appBarTitle),
+      ),
+      body: _pages == null
+          ? Center(child: CircularProgressIndicator())
+          : IndexedStack(
+              index: _currentIndex,
+              children: _pages!,
+            ),
+      bottomNavigationBar: BottomNavigationBar(
+        currentIndex: _currentIndex,
+        onTap: _onTabTapped,
+        items: [
+          BottomNavigationBarItem(
+            icon: Icon(Icons.home),
+            label: 'Home',
           ),
-          IconButton(
-            icon: Icon(Icons.logout),
-            onPressed: () async {
-              await _userController.logout();
-              Navigator.pushNamedAndRemoveUntil(context, '/', (route) => false);
-            },
+          BottomNavigationBarItem(
+            icon: Icon(Icons.event),
+            label: 'My Events',
+          ),
+          BottomNavigationBarItem(
+            icon: Icon(Icons.person),
+            label: 'Profile',
           ),
         ],
       ),
-      body: Padding(
-        padding: const EdgeInsets.all(16.0),
-        child: Column(
-          children: [
-            // Add Friend Section
-            Card(
-              elevation: 4,
-              shape: RoundedRectangleBorder(
-                borderRadius: BorderRadius.circular(12),
-              ),
-              child: Padding(
-                padding: const EdgeInsets.all(16.0),
-                child: Column(
-                  children: [
-                    TextField(
-                      controller: searchController,
-                      decoration: InputDecoration(
-                        labelText: 'Add Friend by Username',
-                        prefixIcon: Icon(Icons.search),
-                        suffixIcon: IconButton(
-                          icon: Icon(Icons.person_add),
-                          onPressed: _sendFriendRequest,
-                        ),
-                        border: OutlineInputBorder(
-                          borderRadius: BorderRadius.circular(12),
-                        ),
+    );
+  }
+
+  Widget _buildFriendsList() {
+    return Padding(
+      padding: const EdgeInsets.all(16.0),
+      child: Column(
+        children: [
+          Card(
+            elevation: 4,
+            shape: RoundedRectangleBorder(
+              borderRadius: BorderRadius.circular(12),
+            ),
+            child: Padding(
+              padding: const EdgeInsets.all(16.0),
+              child: Column(
+                children: [
+                  TextField(
+                    controller: searchController,
+                    decoration: InputDecoration(
+                      labelText: 'Add Friend by Username',
+                      prefixIcon: Icon(Icons.search),
+                      suffixIcon: IconButton(
+                        icon: Icon(Icons.person_add),
+                        onPressed: _sendFriendRequest,
+                      ),
+                      border: OutlineInputBorder(
+                        borderRadius: BorderRadius.circular(12),
                       ),
                     ),
-                  ],
-                ),
-              ),
-            ),
-            SizedBox(height: 16),
-
-            // View or Create My Events Button
-            SizedBox(
-              width: double.infinity,
-              child: ElevatedButton(
-                style: ElevatedButton.styleFrom(
-                  padding: EdgeInsets.symmetric(vertical: 14),
-                  shape: RoundedRectangleBorder(
-                      borderRadius: BorderRadius.circular(12)),
-                ),
-                onPressed: _navigateToMyEvents,
-                child: Text(
-                  'View or Create My Events',
-                  style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold),
-                ),
-              ),
-            ),
-            SizedBox(height: 16),
-
-            // Friend Requests Section
-            if (friendRequests.isNotEmpty)
-              Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Text(
-                    'Friend Requests',
-                    style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
                   ),
-                  SizedBox(height: 8),
-                  ListView.builder(
-                    shrinkWrap: true,
-                    physics: NeverScrollableScrollPhysics(),
-                    itemCount: friendRequests.length,
-                    itemBuilder: (context, index) {
-                      final request = friendRequests[index];
-                      return Card(
-                        child: ListTile(
-                          title: Text(request['username']),
-                          trailing: Row(
-                            mainAxisSize: MainAxisSize.min,
-                            children: [
-                              IconButton(
-                                icon: Icon(Icons.check, color: Colors.green),
-                                onPressed: () =>
-                                    _handleRequest(request['id'], true),
-                              ),
-                              IconButton(
-                                icon: Icon(Icons.close, color: Colors.red),
-                                onPressed: () =>
-                                    _handleRequest(request['id'], false),
-                              ),
-                            ],
-                          ),
-                        ),
-                      );
-                    },
-                  ),
-                  Divider(height: 32, thickness: 1),
                 ],
               ),
-
-            // Friends List Section
-            if (friends.isNotEmpty)
-              Expanded(
+            ),
+          ),
+          SizedBox(height: 16),
+          if (friendRequests.isNotEmpty)
+            Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(
+                  'Friend Requests',
+                  style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
+                ),
+                SizedBox(height: 8),
+                ListView.builder(
+                  shrinkWrap: true,
+                  physics: NeverScrollableScrollPhysics(),
+                  itemCount: friendRequests.length,
+                  itemBuilder: (context, index) {
+                    final request = friendRequests[index];
+                    return Card(
+                      child: ListTile(
+                        title: Text(request['username']),
+                        trailing: Row(
+                          mainAxisSize: MainAxisSize.min,
+                          children: [
+                            IconButton(
+                              icon: Icon(Icons.check, color: Colors.green),
+                              onPressed: () =>
+                                  _handleRequest(request['id'], true),
+                            ),
+                            IconButton(
+                              icon: Icon(Icons.close, color: Colors.red),
+                              onPressed: () =>
+                                  _handleRequest(request['id'], false),
+                            ),
+                          ],
+                        ),
+                      ),
+                    );
+                  },
+                ),
+                Divider(height: 32, thickness: 1),
+              ],
+            ),
+          if (friends.isNotEmpty)
+            Expanded(
+              child: ListView.builder(
+                itemCount: friends.length,
+                itemBuilder: (context, index) {
+                  final friend = friends[index];
+                  return Card(
+                    margin: EdgeInsets.symmetric(vertical: 8),
+                    child: ListTile(
+                      title: Text(friend['username']),
+                      subtitle:
+                          Text('${friend['upcomingEvents']} Upcoming Events'),
+                      trailing: Icon(Icons.arrow_forward_ios),
+                      onTap: () {
+                        Navigator.push(
+                          context,
+                          MaterialPageRoute(
+                            builder: (context) => EventsPage(
+                              userId: widget.currentUserId,
+                              ownerId: friend['id'],
+                              friendusername: friend['username'],
+                            ),
+                          ),
+                        );
+                      },
+                    ),
+                  );
+                },
+              ),
+            ),
+          if (friends.isEmpty && friendRequests.isEmpty)
+            Expanded(
+              child: Center(
                 child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
+                  mainAxisAlignment: MainAxisAlignment.center,
                   children: [
+                    Icon(
+                      Icons.people_alt_outlined,
+                      size: 100,
+                      color: Colors.grey.shade400,
+                    ),
+                    SizedBox(height: 16),
                     Text(
-                      'My Friends',
-                      style:
-                          TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
+                      'No Friends Yet',
+                      style: TextStyle(
+                        fontSize: 20,
+                        fontWeight: FontWeight.bold,
+                        color: Colors.grey.shade600,
+                      ),
                     ),
                     SizedBox(height: 8),
-                    Expanded(
-                      child: ListView.builder(
-                        itemCount: friends.length,
-                        itemBuilder: (context, index) {
-                          final friend = friends[index];
-                          return Card(
-                            margin: EdgeInsets.symmetric(vertical: 8),
-                            child: ListTile(
-                              title: Text(friend['username']),
-                              subtitle: Text(
-                                  '${friend['upcomingEvents']} Upcoming Events'),
-                              trailing: Icon(Icons.arrow_forward_ios),
-                              onTap: () {
-                                _navigateToEvents(
-                                  widget.currentUserId,
-                                  friend['id'], // Friend's ID as ownerId
-                                );
-                              },
-                            ),
-                          );
-                        },
+                    Text(
+                      'Start adding friends to share events!',
+                      style: TextStyle(
+                        fontSize: 16,
+                        color: Colors.grey.shade500,
                       ),
+                      textAlign: TextAlign.center,
                     ),
                   ],
                 ),
               ),
-
-            // Empty State
-            if (friends.isEmpty && friendRequests.isEmpty)
-              Expanded(
-                child: Center(
-                  child: Column(
-                    mainAxisAlignment: MainAxisAlignment.center,
-                    children: [
-                      Icon(
-                        Icons.people_alt_outlined,
-                        size: 100,
-                        color: Colors.grey.shade400,
-                      ),
-                      SizedBox(height: 16),
-                      Text(
-                        'No Friends Yet',
-                        style: TextStyle(
-                          fontSize: 20,
-                          fontWeight: FontWeight.bold,
-                          color: Colors.grey.shade600,
-                        ),
-                      ),
-                      SizedBox(height: 8),
-                      Text(
-                        'Start adding friends to share events!',
-                        style: TextStyle(
-                          fontSize: 16,
-                          color: Colors.grey.shade500,
-                        ),
-                        textAlign: TextAlign.center,
-                      ),
-                    ],
-                  ),
-                ),
-              ),
-          ],
-        ),
+            ),
+        ],
       ),
     );
   }
