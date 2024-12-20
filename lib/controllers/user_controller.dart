@@ -1,10 +1,13 @@
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import '../models/user_model.dart';
+import '../db_helper.dart';
 
 class UserController {
   final FirebaseAuth _auth = FirebaseAuth.instance;
   final FirebaseFirestore _firestore = FirebaseFirestore.instance;
+
+  final DBHelper dbHelper = DBHelper();
 
   void _logError(String methodName, dynamic error) {
     print('[$methodName] Error: $error');
@@ -343,5 +346,18 @@ class UserController {
       _logError('fetchUserDetails', e);
       throw Exception('Failed to fetch user details: $e');
     }
+  }
+
+  Future<void> saveUser(UserModel user) async {
+    await dbHelper.insert('users', user.toMap());
+  }
+
+  Future<List<UserModel>> fetchUsers() async {
+    final users = await dbHelper.queryAll('users');
+    return users.map((data) => UserModel.fromMap(data)).toList();
+  }
+
+  Future<void> deleteUser(String userId) async {
+    await dbHelper.delete('users', 'id = ?', [userId]);
   }
 }

@@ -42,7 +42,7 @@ class _SignupPageState extends State<SignupPage> {
               TextFormField(
                 decoration: InputDecoration(
                   labelText: 'Username',
-                  prefixIcon: Icon(Icons.person, color: Colors.greenAccent),
+                  prefixIcon: Icon(Icons.person, color: Colors.blueAccent),
                   border: OutlineInputBorder(
                     borderRadius: BorderRadius.circular(12),
                   ),
@@ -56,7 +56,7 @@ class _SignupPageState extends State<SignupPage> {
               TextFormField(
                 decoration: InputDecoration(
                   labelText: 'Email',
-                  prefixIcon: Icon(Icons.email, color: Colors.greenAccent),
+                  prefixIcon: Icon(Icons.email, color: Colors.blueAccent),
                   border: OutlineInputBorder(
                     borderRadius: BorderRadius.circular(12),
                   ),
@@ -71,7 +71,7 @@ class _SignupPageState extends State<SignupPage> {
               TextFormField(
                 decoration: InputDecoration(
                   labelText: 'Password',
-                  prefixIcon: Icon(Icons.lock, color: Colors.greenAccent),
+                  prefixIcon: Icon(Icons.lock, color: Colors.blueAccent),
                   border: OutlineInputBorder(
                     borderRadius: BorderRadius.circular(12),
                   ),
@@ -108,7 +108,7 @@ class _SignupPageState extends State<SignupPage> {
                 decoration: InputDecoration(
                   labelText: 'Confirm Password',
                   prefixIcon:
-                      Icon(Icons.lock_outline, color: Colors.greenAccent),
+                      Icon(Icons.lock_outline, color: Colors.blueAccent),
                   border: OutlineInputBorder(
                     borderRadius: BorderRadius.circular(12),
                   ),
@@ -137,7 +137,7 @@ class _SignupPageState extends State<SignupPage> {
               TextButton(
                 child: Text(
                   'Already have an account? Signin',
-                  style: TextStyle(color: Colors.teal[900]),
+                  style: TextStyle(color: Colors.blueAccent),
                 ),
                 onPressed: () => Navigator.pushNamedAndRemoveUntil(
                   context,

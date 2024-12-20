@@ -103,6 +103,7 @@ class _SigninPageState extends State<SigninPage> {
       UserModel? loggedInUser = await _userController.signin(email!, password!);
 
       if (loggedInUser != null) {
+        await _userController.saveUser(loggedInUser);
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(content: Text('Welcome back, ${loggedInUser.username}!')),
         );

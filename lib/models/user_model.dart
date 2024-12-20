@@ -1,3 +1,5 @@
+import 'dart:convert';
+
 class UserModel {
   final String uid;
   final String email;
@@ -14,25 +16,33 @@ class UserModel {
     this.events = const [],
     this.friends = const [],
   });
+
   Map<String, dynamic> toMap() {
     return {
       'uid': uid,
       'email': email,
       'username': username,
-      'gifts': gifts,
-      'events': events,
-      'friends': friends,
+      'gifts': jsonEncode(gifts),
+      'events': jsonEncode(events),
+      'friends': jsonEncode(friends),
     };
   }
 
+  // Create a UserModel instance from a map
   factory UserModel.fromMap(Map<String, dynamic> map) {
     return UserModel(
       uid: map['uid'] ?? '',
       email: map['email'] ?? '',
       username: map['username'] ?? '',
-      gifts: List<String>.from(map['gifts'] ?? []),
-      events: List<String>.from(map['events'] ?? []),
-      friends: List<String>.from(map['friends'] ?? []),
+      gifts: map['gifts'] != null
+          ? List<String>.from(jsonDecode(map['gifts']))
+          : [],
+      events: map['events'] != null
+          ? List<String>.from(jsonDecode(map['events']))
+          : [],
+      friends: map['friends'] != null
+          ? List<String>.from(jsonDecode(map['friends']))
+          : [],
     );
   }
 }
