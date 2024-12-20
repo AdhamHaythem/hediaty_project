@@ -37,7 +37,10 @@ class _FriendsListPageState extends State<FriendsListPage> {
     setState(() {
       _pages = [
         _buildFriendsList(),
-        EventsPage(userId: widget.currentUserId, ownerId: widget.currentUserId),
+        EventsPage(
+            userId: widget.currentUserId,
+            ownerId: widget.currentUserId,
+            NavBar: true),
         ProfilePage(
           userId: widget.currentUserId,
           username: username,

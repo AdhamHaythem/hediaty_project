@@ -8,11 +8,13 @@ class EventsPage extends StatefulWidget {
   final String userId;
   final String ownerId;
   final String? friendusername;
+  final bool NavBar;
 
   const EventsPage(
       {required this.userId,
       required this.ownerId,
       this.friendusername,
+      this.NavBar = false,
       Key? key})
       : super(key: key);
 
@@ -299,23 +301,25 @@ class _EventsPageState extends State<EventsPage> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      appBar: AppBar(
-        title: widget.userId == widget.ownerId
-            ? Text('My Events')
-            : Text("${widget.friendusername}'s Events"),
-        actions: [
-          IconButton(
-            icon: Icon(Icons.sort),
-            tooltip: 'Sort by Date',
-            onPressed: _sortEventsByDate,
-          ),
-          if (widget.userId == widget.ownerId)
-            IconButton(
-              icon: Icon(Icons.add),
-              onPressed: _addEvent,
+      appBar: widget.NavBar
+          ? null
+          : AppBar(
+              title: widget.userId == widget.ownerId
+                  ? Text('My Events')
+                  : Text("${widget.friendusername}'s Events"),
+              actions: [
+                IconButton(
+                  icon: Icon(Icons.sort),
+                  tooltip: 'Sort by Date',
+                  onPressed: _sortEventsByDate,
+                ),
+                if (widget.userId == widget.ownerId)
+                  IconButton(
+                    icon: Icon(Icons.add),
+                    onPressed: _addEvent,
+                  ),
+              ],
             ),
-        ],
-      ),
       body: events.isEmpty
           ? Center(
               child: Column(

@@ -38,7 +38,7 @@ class HedieatyApp extends StatelessWidget {
           case '/events':
             final args = settings.arguments as Map<String, dynamic>;
             final userId = args['userId'] as String;
-            final ownerId = args['ownerId'] as String; // Add ownerId
+            final ownerId = args['ownerId'] as String;
             return MaterialPageRoute(
               builder: (context) =>
                   EventsPage(userId: userId, ownerId: ownerId),
