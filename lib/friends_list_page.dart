@@ -58,11 +58,21 @@ class _FriendsListPageState extends State<FriendsListPage> {
     _loadFriendsAndRequests();
   }
 
+  void _navigateToEvents(String userId, String ownerId) {
+    Navigator.push(
+      context,
+      MaterialPageRoute(
+        builder: (context) => EventsPage(userId: userId, ownerId: ownerId),
+      ),
+    );
+  }
+
   void _navigateToMyEvents() {
     Navigator.push(
       context,
       MaterialPageRoute(
-        builder: (context) => EventsPage(userId: widget.currentUserId),
+        builder: (context) => EventsPage(
+            userId: widget.currentUserId, ownerId: widget.currentUserId),
       ),
     );
   }
@@ -103,7 +113,8 @@ class _FriendsListPageState extends State<FriendsListPage> {
             Card(
               elevation: 4,
               shape: RoundedRectangleBorder(
-                  borderRadius: BorderRadius.circular(12)),
+                borderRadius: BorderRadius.circular(12),
+              ),
               child: Padding(
                 padding: const EdgeInsets.all(16.0),
                 child: Column(
@@ -118,7 +129,8 @@ class _FriendsListPageState extends State<FriendsListPage> {
                           onPressed: _sendFriendRequest,
                         ),
                         border: OutlineInputBorder(
-                            borderRadius: BorderRadius.circular(12)),
+                          borderRadius: BorderRadius.circular(12),
+                        ),
                       ),
                     ),
                   ],
@@ -129,7 +141,7 @@ class _FriendsListPageState extends State<FriendsListPage> {
 
             // View or Create My Events Button
             SizedBox(
-              width: double.infinity, // Full width button
+              width: double.infinity,
               child: ElevatedButton(
                 style: ElevatedButton.styleFrom(
                   padding: EdgeInsets.symmetric(vertical: 14),
@@ -212,12 +224,9 @@ class _FriendsListPageState extends State<FriendsListPage> {
                                   '${friend['upcomingEvents']} Upcoming Events'),
                               trailing: Icon(Icons.arrow_forward_ios),
                               onTap: () {
-                                Navigator.push(
-                                  context,
-                                  MaterialPageRoute(
-                                    builder: (context) =>
-                                        EventsPage(userId: friend['id']),
-                                  ),
+                                _navigateToEvents(
+                                  widget.currentUserId,
+                                  friend['id'], // Friend's ID as ownerId
                                 );
                               },
                             ),

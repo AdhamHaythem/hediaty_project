@@ -3,7 +3,7 @@ class GiftModel {
   final String name;
   final String category;
   final double price;
-  final String status; // e.g., "available", "pledged", "purchased"
+  final String status;
   final String description;
 
   GiftModel({
@@ -25,20 +25,18 @@ class GiftModel {
     };
   }
 
-  factory GiftModel.fromMap(String id, Map<String, dynamic> data) {
+  factory GiftModel.fromMap(String id, Map<String, dynamic> map) {
     return GiftModel(
       id: id,
-      name: data['name'] ?? '',
-      category: data['category'] ?? '',
-      price: (data['price'] ?? 0).toDouble(),
-      status: data['status'] ?? 'available',
-      description: data['description'] ?? '',
+      name: map['name'] ?? '',
+      category: map['category'] ?? '',
+      price: (map['price'] ?? 0).toDouble(),
+      status: map['status'] ?? 'available',
+      description: map['description'] ?? '',
     );
   }
 
-  // Add the copyWith method
   GiftModel copyWith({
-    String? id,
     String? name,
     String? category,
     double? price,
@@ -46,7 +44,7 @@ class GiftModel {
     String? description,
   }) {
     return GiftModel(
-      id: id ?? this.id,
+      id: id,
       name: name ?? this.name,
       category: category ?? this.category,
       price: price ?? this.price,

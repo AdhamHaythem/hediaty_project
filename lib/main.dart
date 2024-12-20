@@ -23,7 +23,7 @@ class HedieatyApp extends StatelessWidget {
       theme: ThemeData(
         primarySwatch: Colors.blue,
       ),
-      home: SigninPage(), // Default page for authentication
+      home: SigninPage(),
       onGenerateRoute: (settings) {
         switch (settings.name) {
           case '/signup':
@@ -40,15 +40,17 @@ class HedieatyApp extends StatelessWidget {
           case '/events':
             final args = settings.arguments as Map<String, dynamic>;
             final userId = args['userId'] as String;
+            final ownerId = args['ownerId'] as String; // Add ownerId
             return MaterialPageRoute(
-              builder: (context) => EventsPage(userId: userId),
+              builder: (context) =>
+                  EventsPage(userId: userId, ownerId: ownerId),
             );
 
           case '/gifts':
             final args = settings.arguments as Map<String, dynamic>;
             final userId = args['userId'] as String;
             final eventId = args['eventId'] as String;
-            final ownerId = args['ownerId'] as String; // Added ownerId
+            final ownerId = args['ownerId'] as String; // Add ownerId
             return MaterialPageRoute(
               builder: (context) => GiftListPage(
                 userId: userId,
@@ -75,7 +77,7 @@ class HedieatyApp extends StatelessWidget {
             );
 
           default:
-            return null; // Return null if no route matches
+            return null;
         }
       },
     );

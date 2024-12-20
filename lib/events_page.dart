@@ -6,8 +6,10 @@ import 'gift_list_page.dart';
 
 class EventsPage extends StatefulWidget {
   final String userId;
+  final String ownerId;
 
-  const EventsPage({required this.userId, Key? key}) : super(key: key);
+  const EventsPage({required this.userId, required this.ownerId, Key? key})
+      : super(key: key);
 
   @override
   _EventsPageState createState() => _EventsPageState();
@@ -25,117 +27,93 @@ class _EventsPageState extends State<EventsPage> {
   }
 
   Future<void> _loadEvents() async {
-    final userEvents = await _eventController.fetchUserEvents(widget.userId);
+    final userEvents = await _eventController.fetchUserEvents(widget.ownerId);
     setState(() {
       events = userEvents;
     });
   }
 
-  void _showAddEventBottomSheet() {
-    final nameController = TextEditingController();
-    final locationController = TextEditingController();
-    final descriptionController = TextEditingController();
+  void _deleteEvent(String eventId) async {
+    if (widget.userId != widget.ownerId) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text('You cannot delete a friend’s event.')),
+      );
+      return;
+    }
 
-    showModalBottomSheet(
+    await _eventController.deleteEvent(widget.ownerId, eventId);
+    ScaffoldMessenger.of(context).showSnackBar(
+      SnackBar(content: Text('Event deleted successfully.')),
+    );
+    _loadEvents();
+  }
+
+  void _editEvent(EventModel event) {
+    final nameController = TextEditingController(text: event.name);
+    final locationController = TextEditingController(text: event.location);
+    final descriptionController =
+        TextEditingController(text: event.description);
+    selectedDate = DateTime.tryParse(event.date);
+
+    showDialog(
       context: context,
-      isScrollControlled: true,
-      shape: RoundedRectangleBorder(
-        borderRadius: BorderRadius.vertical(top: Radius.circular(20)),
-      ),
       builder: (context) {
-        return Padding(
-          padding: EdgeInsets.fromLTRB(
-              16, 16, 16, MediaQuery.of(context).viewInsets.bottom + 16),
-          child: Column(
-            mainAxisSize: MainAxisSize.min,
-            crossAxisAlignment: CrossAxisAlignment.stretch,
-            children: [
-              Text(
-                'Add New Event',
-                style: TextStyle(fontSize: 20, fontWeight: FontWeight.bold),
-                textAlign: TextAlign.center,
-              ),
-              SizedBox(height: 16),
-              TextField(
-                controller: nameController,
-                decoration: InputDecoration(
-                  labelText: 'Event Name',
-                  prefixIcon: Icon(Icons.event),
-                  border: OutlineInputBorder(
-                      borderRadius: BorderRadius.circular(12)),
+        return AlertDialog(
+          title: Text('Edit Event'),
+          content: SingleChildScrollView(
+            child: Column(
+              children: [
+                TextField(
+                  controller: nameController,
+                  decoration: InputDecoration(labelText: 'Event Name'),
                 ),
-              ),
-              SizedBox(height: 16),
-              TextField(
-                controller: locationController,
-                decoration: InputDecoration(
-                  labelText: 'Location',
-                  prefixIcon: Icon(Icons.location_on),
-                  border: OutlineInputBorder(
-                      borderRadius: BorderRadius.circular(12)),
+                TextField(
+                  controller: locationController,
+                  decoration: InputDecoration(labelText: 'Location'),
                 ),
-              ),
-              SizedBox(height: 16),
-              GestureDetector(
-                onTap: _selectDate,
-                child: AbsorbPointer(
-                  child: TextField(
-                    decoration: InputDecoration(
-                      labelText: selectedDate == null
-                          ? 'Select Date'
-                          : DateFormat('yyyy-MM-dd').format(selectedDate!),
-                      prefixIcon: Icon(Icons.calendar_today),
-                      border: OutlineInputBorder(
-                          borderRadius: BorderRadius.circular(12)),
+                GestureDetector(
+                  onTap: _selectDate,
+                  child: AbsorbPointer(
+                    child: TextField(
+                      controller: TextEditingController(
+                          text: selectedDate == null
+                              ? ''
+                              : DateFormat('yyyy-MM-dd').format(selectedDate!)),
+                      decoration: InputDecoration(labelText: 'Date'),
                     ),
                   ),
                 ),
-              ),
-              SizedBox(height: 16),
-              TextField(
-                controller: descriptionController,
-                maxLines: 3,
-                decoration: InputDecoration(
-                  labelText: 'Description',
-                  prefixIcon: Icon(Icons.description),
-                  border: OutlineInputBorder(
-                      borderRadius: BorderRadius.circular(12)),
+                TextField(
+                  controller: descriptionController,
+                  maxLines: 3,
+                  decoration: InputDecoration(labelText: 'Description'),
                 ),
-              ),
-              SizedBox(height: 24),
-              ElevatedButton(
-                onPressed: () async {
-                  if (nameController.text.isEmpty ||
-                      locationController.text.isEmpty ||
-                      selectedDate == null) {
-                    ScaffoldMessenger.of(context).showSnackBar(
-                      SnackBar(content: Text('Please fill out all fields!')),
-                    );
-                    return;
-                  }
-
-                  final newEvent = EventModel(
-                    id: '',
-                    name: nameController.text,
-                    date: DateFormat('yyyy-MM-dd').format(selectedDate!),
-                    location: locationController.text,
-                    description: descriptionController.text,
-                  );
-
-                  await _eventController.addEvent(widget.userId, newEvent);
-                  Navigator.pop(context);
-                  _loadEvents(); // Refresh event list
-                },
-                child: Text('Add Event'),
-                style: ElevatedButton.styleFrom(
-                  padding: EdgeInsets.symmetric(vertical: 16),
-                  shape: RoundedRectangleBorder(
-                    borderRadius: BorderRadius.circular(12),
-                  ),
-                ),
-              ),
-            ],
+              ],
+            ),
           ),
+          actions: [
+            TextButton(
+              onPressed: () async {
+                final updatedEvent = event.copyWith(
+                  name: nameController.text,
+                  location: locationController.text,
+                  date: selectedDate != null
+                      ? DateFormat('yyyy-MM-dd').format(selectedDate!)
+                      : event.date,
+                  description: descriptionController.text,
+                );
+                await _eventController.updateEvent(
+                    widget.ownerId, updatedEvent);
+                Navigator.pop(context);
+                _loadEvents();
+              },
+              child: Text('Save'),
+            ),
+            TextButton(
+              onPressed: () => Navigator.pop(context),
+              child: Text('Cancel'),
+            ),
+          ],
         );
       },
     );
@@ -160,61 +138,44 @@ class _EventsPageState extends State<EventsPage> {
     return Scaffold(
       appBar: AppBar(
         title: Text('My Events'),
-        actions: [
-          IconButton(
-            icon: Icon(Icons.add),
-            onPressed: _showAddEventBottomSheet,
-          ),
-        ],
       ),
       body: events.isEmpty
           ? Center(
-              child: Column(
-                mainAxisAlignment: MainAxisAlignment.center,
-                children: [
-                  Icon(Icons.event, size: 64, color: Colors.grey),
-                  SizedBox(height: 16),
-                  Text(
-                    'No events found. Add your first event!',
-                    style: TextStyle(fontSize: 16, color: Colors.grey),
-                  ),
-                ],
-              ),
+              child: Text('No events found.'),
             )
           : ListView.builder(
-              padding: EdgeInsets.all(8),
               itemCount: events.length,
               itemBuilder: (context, index) {
                 final event = events[index];
                 return Card(
-                  shape: RoundedRectangleBorder(
-                    borderRadius: BorderRadius.circular(10),
-                  ),
-                  elevation: 4,
-                  margin: EdgeInsets.symmetric(vertical: 8),
                   child: ListTile(
-                    contentPadding: EdgeInsets.all(16),
-                    leading:
-                        Icon(Icons.event_note, size: 36, color: Colors.blue),
-                    title: Text(
-                      event.name,
-                      style:
-                          TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
+                    title: Text(event.name),
+                    subtitle: Text('${event.date} at ${event.location}'),
+                    trailing: Row(
+                      mainAxisSize: MainAxisSize.min,
+                      children: [
+                        if (widget.userId == widget.ownerId)
+                          IconButton(
+                            icon: Icon(Icons.edit, color: Colors.blue),
+                            onPressed: () => _editEvent(event),
+                          ),
+                        if (widget.userId == widget.ownerId)
+                          IconButton(
+                            icon: Icon(Icons.delete, color: Colors.red),
+                            onPressed: () => _deleteEvent(event.id),
+                          ),
+                        Icon(Icons.arrow_forward_ios),
+                      ],
                     ),
-                    subtitle: Text(
-                      '${event.date} at ${event.location}\n${event.description}',
-                      style: TextStyle(fontSize: 14),
-                    ),
-                    trailing: Icon(Icons.arrow_forward_ios),
                     onTap: () {
-                      // Navigate to the gift list for the event
                       Navigator.push(
                         context,
                         MaterialPageRoute(
                           builder: (context) => GiftListPage(
-                              userId: widget.userId,
-                              eventId: event.id,
-                              ownerId: widget.userId), // Passing ownerId
+                            userId: widget.userId,
+                            eventId: event.id,
+                            ownerId: widget.ownerId,
+                          ),
                         ),
                       );
                     },
