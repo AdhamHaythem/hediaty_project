@@ -5,9 +5,7 @@ import 'signup.dart';
 import 'friends_list_page.dart';
 import 'events_page.dart';
 import 'gift_list_page.dart';
-import 'gift_details_page.dart';
 import 'profile_page.dart';
-import 'my_pledged_gifts_page.dart';
 
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
@@ -58,19 +56,6 @@ class HedieatyApp extends StatelessWidget {
                 ownerId: ownerId,
               ),
             );
-
-          case '/giftDetails':
-            final args = settings.arguments as Map<String, dynamic>;
-            final gift = args['gift'] as Map<String, dynamic>;
-            return MaterialPageRoute(
-              builder: (context) => GiftDetailsPage(gift: gift),
-            );
-
-          case '/myPledgedGifts':
-            return MaterialPageRoute(
-              builder: (context) => MyPledgedGiftsPage(),
-            );
-
           case '/profile':
             return MaterialPageRoute(
               builder: (context) => ProfilePage(),
