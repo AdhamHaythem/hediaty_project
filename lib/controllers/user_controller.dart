@@ -6,7 +6,6 @@ class UserController {
   final FirebaseAuth _auth = FirebaseAuth.instance;
   final FirebaseFirestore _firestore = FirebaseFirestore.instance;
 
-  // Signin Method
   Future<UserModel?> signin(String email, String password) async {
     try {
       UserCredential userCredential = await _auth.signInWithEmailAndPassword(
@@ -35,10 +34,27 @@ class UserController {
     return null;
   }
 
-  // Signup Method
+  Future<bool> isUsernameTaken(String username) async {
+    try {
+      final querySnapshot = await _firestore
+          .collection('users')
+          .where('username', isEqualTo: username)
+          .get();
+
+      return querySnapshot.docs.isNotEmpty;
+    } catch (e) {
+      print('Error checking username: $e');
+      return false;
+    }
+  }
+
   Future<UserModel?> signup(
       String email, String password, String username) async {
     try {
+      if (await isUsernameTaken(username)) {
+        throw Exception('Username is already taken.');
+      }
+
       UserCredential userCredential =
           await _auth.createUserWithEmailAndPassword(
         email: email,
@@ -48,7 +64,6 @@ class UserController {
       User? user = userCredential.user;
 
       if (user != null) {
-        // Save user details to Firestore
         final userData = {
           'username': username,
           'email': email,
@@ -66,43 +81,39 @@ class UserController {
       }
     } catch (e) {
       print('Signup Error: $e');
+      throw e;
     }
     return null;
   }
 
-  // Update user field (username or email)
   Future<void> updateUserField(
       String userId, String field, String value) async {
     try {
       if (field == 'email') {
-        // Update email in FirebaseAuth
         User? user = _auth.currentUser;
         if (user != null) {
           await user.updateEmail(value);
         }
       }
-      // Update field in Firestore
+
       await _firestore.collection('users').doc(userId).update({field: value});
     } catch (e) {
       throw Exception('Failed to update $field: $e');
     }
   }
 
-  // Update user password
   Future<bool> updatePassword(
       String userId, String oldPassword, String newPassword) async {
     try {
       User? user = _auth.currentUser;
       if (user == null) return false;
 
-      // Reauthenticate the user
       final credential = EmailAuthProvider.credential(
         email: user.email ?? '',
         password: oldPassword,
       );
       await user.reauthenticateWithCredential(credential);
 
-      // Update the password
       await user.updatePassword(newPassword);
       return true;
     } catch (e) {
@@ -111,7 +122,6 @@ class UserController {
     }
   }
 
-  // Log out the user
   Future<void> logout() async {
     try {
       await _auth.signOut();
@@ -138,7 +148,6 @@ class UserController {
     }
   }
 
-  // Send a friend request by username
   Future<void> sendFriendRequest(
       String currentUserId, String targetUsername) async {
     try {
@@ -160,7 +169,6 @@ class UserController {
     }
   }
 
-  // Fetch friend requests for the current user
   Future<List<Map<String, dynamic>>> fetchFriendRequests(
       String currentUserId) async {
     final List<Map<String, dynamic>> requests = [];
@@ -185,7 +193,6 @@ class UserController {
     return requests;
   }
 
-  // Accept or reject a friend request
   Future<void> handleFriendRequest(
       String currentUserId, String senderUserId, bool isAccepted) async {
     try {
@@ -207,7 +214,6 @@ class UserController {
     }
   }
 
-  // Fetch friends with their events
   Future<List<Map<String, dynamic>>> fetchFriendsWithEvents(
       String currentUserId) async {
     final List<Map<String, dynamic>> friendsWithEvents = [];

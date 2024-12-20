@@ -3,9 +3,9 @@ import '../controllers/gift_controller.dart';
 import '../models/gift_model.dart';
 
 class GiftListPage extends StatefulWidget {
-  final String userId; // Current user's ID
-  final String eventId; // Event ID for which gifts are displayed
-  final String ownerId; // Owner of the event
+  final String userId;
+  final String eventId;
+  final String ownerId;
 
   GiftListPage({
     required this.userId,
@@ -257,7 +257,7 @@ class _GiftListPageState extends State<GiftListPage> {
       widget.eventId,
       gift.id,
       'pledged',
-      widget.userId, // Add user ID who pledged
+      widget.userId,
     );
     ScaffoldMessenger.of(context).showSnackBar(
       SnackBar(content: Text('You pledged to buy this gift!')),
@@ -278,7 +278,7 @@ class _GiftListPageState extends State<GiftListPage> {
       widget.eventId,
       gift.id,
       'available',
-      null, // Reset pledgedBy
+      null,
     );
     ScaffoldMessenger.of(context).showSnackBar(
       SnackBar(content: Text('You have unpledged this gift.')),

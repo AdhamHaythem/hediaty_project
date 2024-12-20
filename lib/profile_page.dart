@@ -5,11 +5,13 @@ class ProfilePage extends StatelessWidget {
   final String userId;
   final String username;
   final String email;
+  final String? imageUrl;
 
   const ProfilePage({
     required this.userId,
     required this.username,
     required this.email,
+    this.imageUrl,
     Key? key,
   }) : super(key: key);
 
@@ -25,10 +27,15 @@ class ProfilePage extends StatelessWidget {
               child: CircleAvatar(
                 radius: 50,
                 backgroundColor: Colors.blue,
-                child: Text(
-                  username.isNotEmpty ? username[0].toUpperCase() : '',
-                  style: TextStyle(fontSize: 40, color: Colors.white),
-                ),
+                backgroundImage: imageUrl != null && imageUrl!.isNotEmpty
+                    ? NetworkImage(imageUrl!)
+                    : null,
+                child: imageUrl == null || imageUrl!.isEmpty
+                    ? Text(
+                        username.isNotEmpty ? username[0].toUpperCase() : '',
+                        style: TextStyle(fontSize: 40, color: Colors.white),
+                      )
+                    : null,
               ),
             ),
             SizedBox(height: 24),
@@ -81,7 +88,11 @@ class ProfilePage extends StatelessWidget {
                             final userController = UserController();
                             await userController.logout();
                             Navigator.pop(context);
-                            Navigator.pushReplacementNamed(context, '/signup');
+                            Navigator.pushNamedAndRemoveUntil(
+                              context,
+                              '/signin',
+                              (route) => false,
+                            );
                           },
                           child: Text('Log Out'),
                         ),

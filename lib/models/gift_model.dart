@@ -5,8 +5,8 @@ class GiftModel {
   final double price;
   final String status;
   final String description;
-  final String? pledgedBy; // User ID of the person who pledged
-  final String? pledgedByName; // Username of the person who pledged
+  final String? pledgedBy;
+  final String? pledgedByName;
 
   GiftModel({
     required this.id,

@@ -14,8 +14,6 @@ class UserModel {
     this.events = const [],
     this.friends = const [],
   });
-
-  // Convert to Map for Firestore
   Map<String, dynamic> toMap() {
     return {
       'uid': uid,
@@ -27,7 +25,6 @@ class UserModel {
     };
   }
 
-  // Create from Firestore Map
   factory UserModel.fromMap(Map<String, dynamic> map) {
     return UserModel(
       uid: map['uid'] ?? '',

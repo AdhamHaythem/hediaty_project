@@ -25,7 +25,7 @@ class EventsPage extends StatefulWidget {
 class _EventsPageState extends State<EventsPage> {
   final EventController _eventController = EventController();
   List<EventModel> events = [];
-  bool isSortedByDate = false; // Track if sorting is applied
+  bool isSortedByDate = false;
 
   @override
   void initState() {
@@ -304,94 +304,137 @@ class _EventsPageState extends State<EventsPage> {
       appBar: widget.NavBar
           ? null
           : AppBar(
-              title: widget.userId == widget.ownerId
-                  ? Text('My Events')
-                  : Text("${widget.friendusername}'s Events"),
-              actions: [
-                IconButton(
-                  icon: Icon(Icons.sort),
-                  tooltip: 'Sort by Date',
-                  onPressed: _sortEventsByDate,
-                ),
-                if (widget.userId == widget.ownerId)
-                  IconButton(
-                    icon: Icon(Icons.add),
-                    onPressed: _addEvent,
-                  ),
-              ],
-            ),
-      body: events.isEmpty
-          ? Center(
-              child: Column(
-                mainAxisAlignment: MainAxisAlignment.center,
-                children: [
-                  Icon(Icons.event, size: 64, color: Colors.grey),
-                  SizedBox(height: 16),
-                  Text(
-                    'No events found. Add your first event!',
-                    style: TextStyle(fontSize: 16, color: Colors.grey),
-                  ),
-                ],
+              title: Text(
+                widget.userId == widget.ownerId
+                    ? 'My Events'
+                    : "${widget.friendusername}'s Events",
               ),
-            )
-          : ListView.builder(
-              itemCount: events.length,
-              itemBuilder: (context, index) {
-                final event = events[index];
-                return Card(
-                  margin: EdgeInsets.symmetric(vertical: 8, horizontal: 16),
-                  shape: RoundedRectangleBorder(
-                    borderRadius: BorderRadius.circular(12),
-                  ),
-                  elevation: 4,
-                  child: ListTile(
-                    leading: Icon(Icons.event, color: Colors.blue, size: 40),
-                    title: Text(
-                      event.name,
-                      style: TextStyle(fontWeight: FontWeight.bold),
-                    ),
-                    subtitle: Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: [
-                        Text('${event.date} - ${event.location}'),
-                        Text(event.description, style: TextStyle(fontSize: 12)),
-                      ],
-                    ),
-                    trailing: widget.userId == widget.ownerId
-                        ? Row(
-                            mainAxisSize: MainAxisSize.min,
-                            children: [
-                              IconButton(
-                                icon: Icon(Icons.edit, color: Colors.blue),
-                                onPressed: () => _editEvent(event),
-                              ),
-                              IconButton(
-                                icon: Icon(Icons.delete, color: Colors.red),
-                                onPressed: () async {
-                                  await _eventController.deleteEvent(
-                                      widget.ownerId, event.id);
-                                  _loadEvents();
-                                },
-                              ),
-                            ],
-                          )
-                        : null,
-                    onTap: () {
-                      Navigator.push(
-                        context,
-                        MaterialPageRoute(
-                          builder: (context) => GiftListPage(
-                            userId: widget.userId,
-                            eventId: event.id,
-                            ownerId: widget.ownerId,
-                          ),
-                        ),
-                      );
-                    },
-                  ),
-                );
-              },
+              backgroundColor: Colors.deepPurpleAccent,
             ),
+      body: SafeArea(
+        child: Column(
+          children: [
+            SizedBox(height: 16.0),
+            if (widget.userId == widget.ownerId)
+              Padding(
+                padding:
+                    const EdgeInsets.symmetric(horizontal: 16.0, vertical: 8.0),
+                child: Row(
+                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                  children: [
+                    ElevatedButton.icon(
+                      onPressed: _addEvent,
+                      icon: Icon(Icons.add),
+                      label: Text('Add Event'),
+                      style: ElevatedButton.styleFrom(
+                        backgroundColor: Colors.deepPurpleAccent,
+                        foregroundColor: Colors.white,
+                        padding: EdgeInsets.symmetric(
+                          vertical: 12.0,
+                          horizontal: 16.0,
+                        ),
+                        shape: RoundedRectangleBorder(
+                          borderRadius: BorderRadius.circular(12),
+                        ),
+                      ),
+                    ),
+                    IconButton(
+                      icon: Icon(Icons.sort),
+                      tooltip: 'Sort by Date',
+                      color: Colors.purpleAccent,
+                      iconSize: 28,
+                      onPressed: _sortEventsByDate,
+                    ),
+                  ],
+                ),
+              ),
+            Expanded(
+              child: events.isEmpty
+                  ? Center(
+                      child: Column(
+                        mainAxisAlignment: MainAxisAlignment.center,
+                        children: [
+                          Icon(Icons.event, size: 64, color: Colors.grey),
+                          SizedBox(height: 16),
+                          Text(
+                            'No events found. Add your first event!',
+                            style: TextStyle(fontSize: 16, color: Colors.grey),
+                          ),
+                        ],
+                      ),
+                    )
+                  : ListView.builder(
+                      itemCount: events.length,
+                      itemBuilder: (context, index) {
+                        final event = events[index];
+                        return Card(
+                          margin:
+                              EdgeInsets.symmetric(vertical: 8, horizontal: 16),
+                          shape: RoundedRectangleBorder(
+                            borderRadius: BorderRadius.circular(12),
+                          ),
+                          elevation: 4,
+                          child: ListTile(
+                            leading: Icon(Icons.event,
+                                color: Colors.deepPurpleAccent),
+                            title: Text(
+                              event.name,
+                              style: TextStyle(
+                                fontWeight: FontWeight.bold,
+                                color: Colors.black87, // Neutral text color
+                              ),
+                            ),
+                            subtitle: Column(
+                              crossAxisAlignment: CrossAxisAlignment.start,
+                              children: [
+                                Text('${event.date} - ${event.location}',
+                                    style: TextStyle(color: Colors.black54)),
+                                Text(event.description,
+                                    style: TextStyle(
+                                        fontSize: 12, color: Colors.black54)),
+                              ],
+                            ),
+                            trailing: widget.userId == widget.ownerId
+                                ? Row(
+                                    mainAxisSize: MainAxisSize.min,
+                                    children: [
+                                      IconButton(
+                                        icon: Icon(Icons.edit,
+                                            color: Colors.blueAccent),
+                                        onPressed: () => _editEvent(event),
+                                      ),
+                                      IconButton(
+                                        icon: Icon(Icons.delete,
+                                            color: Colors.redAccent),
+                                        onPressed: () async {
+                                          await _eventController.deleteEvent(
+                                              widget.ownerId, event.id);
+                                          _loadEvents();
+                                        },
+                                      ),
+                                    ],
+                                  )
+                                : null,
+                            onTap: () {
+                              Navigator.push(
+                                context,
+                                MaterialPageRoute(
+                                  builder: (context) => GiftListPage(
+                                    userId: widget.userId,
+                                    eventId: event.id,
+                                    ownerId: widget.ownerId,
+                                  ),
+                                ),
+                              );
+                            },
+                          ),
+                        );
+                      },
+                    ),
+            ),
+          ],
+        ),
+      ),
     );
   }
 }

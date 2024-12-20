@@ -18,62 +18,114 @@ class _SignupPageState extends State<SignupPage> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      appBar: AppBar(title: Text('Signup')),
+      appBar: AppBar(
+        title: Text('Signup'),
+        backgroundColor: Colors.greenAccent,
+      ),
       body: Padding(
-        padding: const EdgeInsets.all(16.0),
+        padding: const EdgeInsets.symmetric(horizontal: 24.0, vertical: 16.0),
         child: Form(
           key: _formKey,
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.stretch,
             children: [
+              Text(
+                'Create Your Account',
+                style: TextStyle(
+                  fontSize: 24,
+                  fontWeight: FontWeight.bold,
+                  color: Colors.greenAccent,
+                ),
+                textAlign: TextAlign.center,
+              ),
+              SizedBox(height: 24),
               TextFormField(
-                decoration: InputDecoration(labelText: 'Username'),
+                decoration: InputDecoration(
+                  labelText: 'Username',
+                  prefixIcon: Icon(Icons.person, color: Colors.greenAccent),
+                  border: OutlineInputBorder(
+                    borderRadius: BorderRadius.circular(12),
+                  ),
+                ),
                 validator: (value) => value == null || value.isEmpty
                     ? 'Please enter a username'
                     : null,
                 onSaved: (value) => username = value,
               ),
+              SizedBox(height: 16),
               TextFormField(
-                decoration: InputDecoration(labelText: 'Email'),
+                decoration: InputDecoration(
+                  labelText: 'Email',
+                  prefixIcon: Icon(Icons.email, color: Colors.greenAccent),
+                  border: OutlineInputBorder(
+                    borderRadius: BorderRadius.circular(12),
+                  ),
+                ),
                 keyboardType: TextInputType.emailAddress,
                 validator: (value) => value == null || !value.contains('@')
                     ? 'Please enter a valid email'
                     : null,
                 onSaved: (value) => email = value,
               ),
+              SizedBox(height: 16),
               TextFormField(
-                decoration: InputDecoration(labelText: 'Password'),
+                decoration: InputDecoration(
+                  labelText: 'Password',
+                  prefixIcon: Icon(Icons.lock, color: Colors.greenAccent),
+                  border: OutlineInputBorder(
+                    borderRadius: BorderRadius.circular(12),
+                  ),
+                ),
                 obscureText: true,
-                validator: (value) {
-                  if (value == null || value.length < 6) {
-                    return 'Password must be at least 6 characters';
-                  }
-                  return null;
-                },
+                validator: (value) => value == null || value.length < 6
+                    ? 'Password must be at least 6 characters'
+                    : null,
                 onChanged: (value) {
                   _tempPassword = value;
                 },
                 onSaved: (value) => password = value,
               ),
+              SizedBox(height: 16),
               TextFormField(
-                decoration: InputDecoration(labelText: 'Confirm Password'),
+                decoration: InputDecoration(
+                  labelText: 'Confirm Password',
+                  prefixIcon:
+                      Icon(Icons.lock_outline, color: Colors.greenAccent),
+                  border: OutlineInputBorder(
+                    borderRadius: BorderRadius.circular(12),
+                  ),
+                ),
                 obscureText: true,
-                validator: (value) {
-                  if (value == null || value != _tempPassword) {
-                    return 'Passwords do not match';
-                  }
-                  return null;
-                },
+                validator: (value) => value == null || value != _tempPassword
+                    ? 'Passwords do not match'
+                    : null,
                 onSaved: (value) => confirmPassword = value,
               ),
-              SizedBox(height: 20),
+              SizedBox(height: 24),
               ElevatedButton(
-                child: Text('Signup'),
+                style: ElevatedButton.styleFrom(
+                  padding: EdgeInsets.symmetric(vertical: 16),
+                  shape: RoundedRectangleBorder(
+                    borderRadius: BorderRadius.circular(12),
+                  ),
+                  backgroundColor: Colors.greenAccent,
+                ),
+                child: Text(
+                  'Signup',
+                  style: TextStyle(fontSize: 16),
+                ),
                 onPressed: _handleSignup,
               ),
               TextButton(
-                child: Text('Already have an account? Signin'),
-                onPressed: () => Navigator.pop(context),
+                child: Text(
+                  'Already have an account? Signin',
+                  style: TextStyle(color: Colors.greenAccent),
+                ),
+                onPressed: () => Navigator.pushNamedAndRemoveUntil(
+                  context,
+                  '/signin',
+                  (Route<dynamic> route) => false,
+                ),
               ),
             ],
           ),
@@ -86,23 +138,26 @@ class _SignupPageState extends State<SignupPage> {
     if (_formKey.currentState!.validate()) {
       _formKey.currentState!.save();
 
-      UserModel? newUser =
-          await _userController.signup(email!, password!, username!);
+      try {
+        UserModel? newUser =
+            await _userController.signup(email!, password!, username!);
 
-      if (newUser != null) {
+        if (newUser != null) {
+          ScaffoldMessenger.of(context).showSnackBar(
+            SnackBar(
+                content:
+                    Text('Signup successful! Welcome ${newUser.username}')),
+          );
+          Navigator.pushReplacement(
+            context,
+            MaterialPageRoute(
+              builder: (context) => FriendsListPage(currentUserId: newUser.uid),
+            ),
+          );
+        }
+      } catch (e) {
         ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(
-              content: Text('Signup successful! Welcome ${newUser.username}')),
-        );
-        Navigator.pushReplacement(
-          context,
-          MaterialPageRoute(
-            builder: (context) => FriendsListPage(currentUserId: newUser.uid),
-          ),
-        );
-      } else {
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text('Signup failed. Please try again.')),
+          SnackBar(content: Text(e.toString())),
         );
       }
     }
