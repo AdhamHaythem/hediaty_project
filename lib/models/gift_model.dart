@@ -5,6 +5,8 @@ class GiftModel {
   final double price;
   final String status;
   final String description;
+  final String? pledgedBy; // User ID of the person who pledged
+  final String? pledgedByName; // Username of the person who pledged
 
   GiftModel({
     required this.id,
@@ -13,6 +15,8 @@ class GiftModel {
     required this.price,
     required this.status,
     required this.description,
+    this.pledgedBy,
+    this.pledgedByName,
   });
 
   Map<String, dynamic> toMap() {
@@ -22,6 +26,8 @@ class GiftModel {
       'price': price,
       'status': status,
       'description': description,
+      'pledgedBy': pledgedBy,
+      'pledgedByName': pledgedByName,
     };
   }
 
@@ -33,6 +39,8 @@ class GiftModel {
       price: (map['price'] ?? 0).toDouble(),
       status: map['status'] ?? 'available',
       description: map['description'] ?? '',
+      pledgedBy: map['pledgedBy'],
+      pledgedByName: map['pledgedByName'],
     );
   }
 
@@ -42,6 +50,8 @@ class GiftModel {
     double? price,
     String? status,
     String? description,
+    String? pledgedBy,
+    String? pledgedByName,
   }) {
     return GiftModel(
       id: id,
@@ -50,6 +60,8 @@ class GiftModel {
       price: price ?? this.price,
       status: status ?? this.status,
       description: description ?? this.description,
+      pledgedBy: pledgedBy ?? this.pledgedBy,
+      pledgedByName: pledgedByName ?? this.pledgedByName,
     );
   }
 }

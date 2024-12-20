@@ -6,51 +6,64 @@ class GiftController {
 
   // Fetch gifts for a specific event
   Future<List<GiftModel>> fetchGiftsForEvent(
-      String userId, String eventId) async {
+      String ownerId, String eventId) async {
     final snapshot = await _firestore
         .collection('users')
-        .doc(userId)
+        .doc(ownerId)
         .collection('events')
         .doc(eventId)
         .collection('gifts')
         .get();
 
-    return snapshot.docs
-        .map((doc) =>
-            GiftModel.fromMap(doc.id, doc.data() as Map<String, dynamic>))
-        .toList();
+    List<GiftModel> gifts = [];
+    for (var doc in snapshot.docs) {
+      final data = doc.data() as Map<String, dynamic>;
+      String? pledgedByName;
+
+      // Fetch username if pledgedBy is present
+      if (data['pledgedBy'] != null) {
+        final userDoc =
+            await _firestore.collection('users').doc(data['pledgedBy']).get();
+        pledgedByName = userDoc.data()?['username'];
+      }
+
+      gifts.add(
+          GiftModel.fromMap(doc.id, {...data, 'pledgedByName': pledgedByName}));
+    }
+
+    return gifts;
   }
 
-  // Add a gift to a specific event
-  Future<void> addGift(String userId, String eventId, GiftModel gift) async {
+  // Add a new gift
+  Future<void> addGift(String ownerId, String eventId, GiftModel gift) async {
     await _firestore
         .collection('users')
-        .doc(userId)
+        .doc(ownerId)
         .collection('events')
         .doc(eventId)
         .collection('gifts')
         .add(gift.toMap());
   }
 
-  // Update the status of a gift (e.g., mark as pledged)
-  Future<void> updateGiftStatus(
-      String userId, String eventId, String giftId, String newStatus) async {
+  // Update the status of a gift
+  Future<void> updateGiftStatus(String ownerId, String eventId, String giftId,
+      String status, String? pledgedBy) async {
     await _firestore
         .collection('users')
-        .doc(userId)
+        .doc(ownerId)
         .collection('events')
         .doc(eventId)
         .collection('gifts')
         .doc(giftId)
-        .update({'status': newStatus});
+        .update({'status': status, 'pledgedBy': pledgedBy});
   }
 
   // Update an existing gift
   Future<void> updateGift(
-      String userId, String eventId, GiftModel updatedGift) async {
+      String ownerId, String eventId, GiftModel updatedGift) async {
     await _firestore
         .collection('users')
-        .doc(userId)
+        .doc(ownerId)
         .collection('events')
         .doc(eventId)
         .collection('gifts')
@@ -59,10 +72,10 @@ class GiftController {
   }
 
   // Delete a gift
-  Future<void> deleteGift(String userId, String eventId, String giftId) async {
+  Future<void> deleteGift(String ownerId, String eventId, String giftId) async {
     await _firestore
         .collection('users')
-        .doc(userId)
+        .doc(ownerId)
         .collection('events')
         .doc(eventId)
         .collection('gifts')
