@@ -18,7 +18,7 @@ void main() {
       await tester.pump();
       await tester.tap(find.byType(ElevatedButton));
       await tester.pumpAndSettle(Duration(seconds: 2));
-      expect(find.byIcon(Icons.person_add_alt_1), findsOneWidget);
+      expect(find.byIcon(Icons.search), findsOneWidget);
       await tester.enterText(find.byType(TextField), "a");
       await tester.pump(Duration(seconds: 5));
       await tester.tap(find.byType(ElevatedButton));

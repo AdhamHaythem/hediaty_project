@@ -157,6 +157,7 @@ class ProfilePage extends StatelessWidget {
   void _editField(BuildContext context, String field, String initialValue) {
     final controller = TextEditingController(text: initialValue);
     final userController = UserController();
+
     showDialog(
       context: context,
       builder: (context) {
@@ -178,53 +179,43 @@ class ProfilePage extends StatelessWidget {
             ),
             TextButton(
               onPressed: () async {
-                if (controller.text.isEmpty) {
-                  showDialog(
-                    context: context,
-                    builder: (context) => AlertDialog(
-                      title: Text('Error'),
-                      content: Text('$field cannot be empty!'),
-                      actions: [
-                        TextButton(
-                          onPressed: () => Navigator.pop(context),
-                          child: Text('OK'),
-                        ),
-                      ],
-                    ),
-                  );
+                final newValue = controller.text.trim();
+
+                // Validate input
+                if (newValue.isEmpty) {
+                  _showErrorDialog(context, '$field cannot be empty!');
                   return;
+                }
+                if (field == 'Email') {
+                  if (!RegExp(r'^[^@]+@[^@]+\.[^@]+').hasMatch(newValue)) {
+                    _showErrorDialog(
+                        context, 'Please enter a valid email address.');
+                    return;
+                  }
+                  if (await userController.isEmailTaken(newValue)) {
+                    _showErrorDialog(context, 'This email is already taken!');
+                    return;
+                  }
+                }
+                if (field == 'Username') {
+                  if (newValue.length < 3) {
+                    _showErrorDialog(context,
+                        'Username must be at least 3 characters long.');
+                    return;
+                  }
+                  if (await userController.isUsernameTaken(newValue)) {
+                    _showErrorDialog(
+                        context, 'This username is already taken!');
+                    return;
+                  }
                 }
 
                 try {
                   await userController.updateUserField(
-                      userId, field.toLowerCase(), controller.text);
-                  showDialog(
-                    context: context,
-                    builder: (context) => AlertDialog(
-                      title: Text('Success'),
-                      content: Text('$field updated successfully!'),
-                      actions: [
-                        TextButton(
-                          onPressed: () => Navigator.pop(context),
-                          child: Text('OK'),
-                        ),
-                      ],
-                    ),
-                  );
+                      userId, field.toLowerCase(), newValue);
+                  _showSuccessDialog(context, '$field updated successfully!');
                 } catch (e) {
-                  showDialog(
-                    context: context,
-                    builder: (context) => AlertDialog(
-                      title: Text('Error'),
-                      content: Text('Failed to update $field. $e'),
-                      actions: [
-                        TextButton(
-                          onPressed: () => Navigator.pop(context),
-                          child: Text('OK'),
-                        ),
-                      ],
-                    ),
-                  );
+                  _showErrorDialog(context, 'Failed to update $field. $e');
                 }
                 Navigator.pop(context);
               },
@@ -295,89 +286,37 @@ class ProfilePage extends StatelessWidget {
                 final newPassword = newPasswordController.text;
                 final confirmPassword = confirmPasswordController.text;
 
+                // Password validation
                 if (oldPassword.isEmpty ||
                     newPassword.isEmpty ||
                     confirmPassword.isEmpty) {
-                  showDialog(
-                    context: context,
-                    builder: (context) => AlertDialog(
-                      title: Text('Error'),
-                      content: Text('All fields are required!'),
-                      actions: [
-                        TextButton(
-                          onPressed: () => Navigator.pop(context),
-                          child: Text('OK'),
-                        ),
-                      ],
-                    ),
-                  );
+                  _showErrorDialog(context, 'All fields are required!');
                   return;
                 }
-
                 if (newPassword != confirmPassword) {
-                  showDialog(
-                    context: context,
-                    builder: (context) => AlertDialog(
-                      title: Text('Error'),
-                      content: Text('New passwords do not match!'),
-                      actions: [
-                        TextButton(
-                          onPressed: () => Navigator.pop(context),
-                          child: Text('OK'),
-                        ),
-                      ],
-                    ),
-                  );
+                  _showErrorDialog(context, 'New passwords do not match!');
+                  return;
+                }
+                if (!RegExp(
+                        r'^(?=.*[A-Z])(?=.*[a-z])(?=.*\d)(?=.*[!@#$%^&*(),.?":{}|<>]).{6,}$')
+                    .hasMatch(newPassword)) {
+                  _showErrorDialog(context,
+                      'Password must be at least 6 characters and include an uppercase letter, a lowercase letter, a number, and a special character.');
                   return;
                 }
 
                 try {
                   final success = await userController.updatePassword(
-                      userId, oldPassword, newPassword);
+                      oldPassword, newPassword);
                   if (success) {
-                    showDialog(
-                      context: context,
-                      builder: (context) => AlertDialog(
-                        title: Text('Success'),
-                        content: Text('Password updated successfully!'),
-                        actions: [
-                          TextButton(
-                            onPressed: () => Navigator.pop(context),
-                            child: Text('OK'),
-                          ),
-                        ],
-                      ),
-                    );
+                    _showSuccessDialog(
+                        context, 'Password updated successfully!');
                     Navigator.pop(context);
                   } else {
-                    showDialog(
-                      context: context,
-                      builder: (context) => AlertDialog(
-                        title: Text('Error'),
-                        content: Text('Old password is incorrect.'),
-                        actions: [
-                          TextButton(
-                            onPressed: () => Navigator.pop(context),
-                            child: Text('OK'),
-                          ),
-                        ],
-                      ),
-                    );
+                    _showErrorDialog(context, 'Old password is incorrect.');
                   }
                 } catch (e) {
-                  showDialog(
-                    context: context,
-                    builder: (context) => AlertDialog(
-                      title: Text('Error'),
-                      content: Text('Failed to update password. $e'),
-                      actions: [
-                        TextButton(
-                          onPressed: () => Navigator.pop(context),
-                          child: Text('OK'),
-                        ),
-                      ],
-                    ),
-                  );
+                  _showErrorDialog(context, 'Failed to update password. $e');
                 }
               },
               child: Text('Save'),
@@ -385,6 +324,38 @@ class ProfilePage extends StatelessWidget {
           ],
         );
       },
+    );
+  }
+
+  void _showErrorDialog(BuildContext context, String message) {
+    showDialog(
+      context: context,
+      builder: (context) => AlertDialog(
+        title: Text('Error'),
+        content: Text(message),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(context),
+            child: Text('OK'),
+          ),
+        ],
+      ),
+    );
+  }
+
+  void _showSuccessDialog(BuildContext context, String message) {
+    showDialog(
+      context: context,
+      builder: (context) => AlertDialog(
+        title: Text('Success'),
+        content: Text(message),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(context),
+            child: Text('OK'),
+          ),
+        ],
+      ),
     );
   }
 }

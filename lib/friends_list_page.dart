@@ -16,11 +16,13 @@ class _FriendsListPageState extends State<FriendsListPage> {
   final TextEditingController searchController = TextEditingController();
   final UserController _userController = UserController();
 
+  final PageController _pageController = PageController(); // For animations
   List<Map<String, dynamic>> friends = [];
   List<Map<String, dynamic>> friendRequests = [];
   String username = "";
   String email = "";
   int _currentIndex = 0;
+  bool isLoading = true; // Loading indicator
 
   @override
   void initState() {
@@ -29,8 +31,16 @@ class _FriendsListPageState extends State<FriendsListPage> {
   }
 
   Future<void> _initializeData() async {
-    await _loadUserData();
-    await _loadFriendsAndRequests();
+    try {
+      await _loadUserData();
+      await _loadFriendsAndRequests();
+
+      setState(() {
+        isLoading = false; // Stop loading spinner
+      });
+    } catch (e) {
+      _showErrorDialog('Failed to initialize data: $e');
+    }
   }
 
   Future<void> _loadUserData() async {
@@ -42,7 +52,7 @@ class _FriendsListPageState extends State<FriendsListPage> {
         email = userData['email'] ?? "your-email@example.com";
       });
     } catch (e) {
-      _showErrorDialog('Failed to load user data: $e');
+      throw Exception('Failed to load user data: $e');
     }
   }
 
@@ -58,7 +68,17 @@ class _FriendsListPageState extends State<FriendsListPage> {
         friendRequests = fetchedRequests;
       });
     } catch (e) {
-      _showErrorDialog('Failed to load friends: $e');
+      throw Exception('Failed to load friends: $e');
+    }
+  }
+
+  void _removeFriend(String friendId) async {
+    try {
+      await _userController.removeFriend(widget.currentUserId, friendId);
+      await _loadFriendsAndRequests(); // Refresh the data
+      _showSuccessDialog('Friend removed successfully!');
+    } catch (e) {
+      _showErrorDialog('Failed to remove friend: $e');
     }
   }
 
@@ -137,25 +157,43 @@ class _FriendsListPageState extends State<FriendsListPage> {
         title: Text(_getAppBarTitle()),
         backgroundColor: Colors.deepPurpleAccent,
       ),
-      body: IndexedStack(
-        index: _currentIndex,
-        children: [
-          _buildFriendsList(),
-          EventsPage(
-            userId: widget.currentUserId,
-            ownerId: widget.currentUserId,
-            NavBar: true,
-          ),
-          ProfilePage(
-            userId: widget.currentUserId,
-            username: username,
-            email: email,
-          ),
-        ],
-      ),
+      body: isLoading
+          ? Center(
+              child: CircularProgressIndicator(
+                valueColor: AlwaysStoppedAnimation<Color>(
+                  Colors.deepPurpleAccent,
+                ),
+              ),
+            )
+          : PageView(
+              controller: _pageController,
+              onPageChanged: (index) {
+                setState(() {
+                  _currentIndex = index;
+                });
+              },
+              children: [
+                _buildFriendsList(),
+                EventsPage(
+                  userId: widget.currentUserId,
+                  ownerId: widget.currentUserId,
+                  NavBar: true,
+                ),
+                ProfilePage(
+                  userId: widget.currentUserId,
+                  username: username,
+                  email: email,
+                ),
+              ],
+            ),
       bottomNavigationBar: BottomNavigationBar(
         currentIndex: _currentIndex,
         onTap: (index) {
+          _pageController.animateToPage(
+            index,
+            duration: Duration(milliseconds: 300),
+            curve: Curves.easeInOut,
+          );
           setState(() {
             _currentIndex = index;
           });
@@ -270,11 +308,13 @@ class _FriendsListPageState extends State<FriendsListPage> {
                   children: [
                     IconButton(
                       icon: Icon(Icons.check, color: Colors.green),
-                      onPressed: () => _handleRequest(request['id'], true),
+                      onPressed: () =>
+                          _handleRequest(request['id'], true), // Accept request
                     ),
                     IconButton(
                       icon: Icon(Icons.close, color: Colors.red),
-                      onPressed: () => _handleRequest(request['id'], false),
+                      onPressed: () => _handleRequest(
+                          request['id'], false), // Reject request
                     ),
                   ],
                 ),
@@ -287,55 +327,52 @@ class _FriendsListPageState extends State<FriendsListPage> {
   }
 
   Widget _buildFriendsListSection() {
-    return Column(
-      children: [
-        if (friendRequests.isNotEmpty)
-          Padding(
-            padding: const EdgeInsets.symmetric(horizontal: 16.0),
-            child: Divider(
-              thickness: 1.0,
-              color: Colors.grey,
-            ),
+    return ListView.builder(
+      shrinkWrap: true,
+      physics: NeverScrollableScrollPhysics(),
+      itemCount: friends.length,
+      itemBuilder: (context, index) {
+        final friend = friends[index];
+        return Card(
+          margin: EdgeInsets.symmetric(vertical: 8),
+          shape: RoundedRectangleBorder(
+            borderRadius: BorderRadius.circular(12),
           ),
-        ListView.builder(
-          shrinkWrap: true,
-          physics: NeverScrollableScrollPhysics(),
-          itemCount: friends.length,
-          itemBuilder: (context, index) {
-            final friend = friends[index];
-            return Card(
-              margin: EdgeInsets.symmetric(vertical: 8),
-              shape: RoundedRectangleBorder(
-                borderRadius: BorderRadius.circular(12),
+          child: ListTile(
+            leading: CircleAvatar(
+              backgroundColor: Colors.deepPurpleAccent,
+              child: Text(
+                friend['username'][0].toUpperCase(),
+                style: TextStyle(color: Colors.white),
               ),
-              child: ListTile(
-                leading: CircleAvatar(
-                  backgroundColor: Colors.deepPurpleAccent,
-                  child: Text(
-                    friend['username'][0].toUpperCase(),
-                    style: TextStyle(color: Colors.white),
+            ),
+            title: Text(friend['username']),
+            subtitle: Text('${friend['upcomingEvents']} Upcoming Events'),
+            trailing: Row(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                IconButton(
+                  icon: Icon(Icons.person_remove, color: Colors.red),
+                  onPressed: () => _removeFriend(friend['id']), // Remove friend
+                ),
+                Icon(Icons.arrow_forward_ios),
+              ],
+            ),
+            onTap: () {
+              Navigator.push(
+                context,
+                MaterialPageRoute(
+                  builder: (context) => EventsPage(
+                    userId: widget.currentUserId,
+                    ownerId: friend['id'],
+                    friendusername: friend['username'],
                   ),
                 ),
-                title: Text(friend['username']),
-                subtitle: Text('${friend['upcomingEvents']} Upcoming Events'),
-                trailing: Icon(Icons.arrow_forward_ios),
-                onTap: () {
-                  Navigator.push(
-                    context,
-                    MaterialPageRoute(
-                      builder: (context) => EventsPage(
-                        userId: widget.currentUserId,
-                        ownerId: friend['id'],
-                        friendusername: friend['username'],
-                      ),
-                    ),
-                  );
-                },
-              ),
-            );
-          },
-        ),
-      ],
+              );
+            },
+          ),
+        );
+      },
     );
   }
 }

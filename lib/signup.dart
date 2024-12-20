@@ -77,9 +77,27 @@ class _SignupPageState extends State<SignupPage> {
                   ),
                 ),
                 obscureText: true,
-                validator: (value) => value == null || value.length < 6
-                    ? 'Password must be at least 6 characters'
-                    : null,
+                validator: (value) {
+                  if (value == null || value.isEmpty) {
+                    return 'Password is required';
+                  }
+                  if (value.length < 6) {
+                    return 'Password must be at least 6 characters';
+                  }
+                  if (!RegExp(r'[A-Z]').hasMatch(value)) {
+                    return 'Password must contain at least one uppercase letter';
+                  }
+                  if (!RegExp(r'[a-z]').hasMatch(value)) {
+                    return 'Password must contain at least one lowercase letter';
+                  }
+                  if (!RegExp(r'\d').hasMatch(value)) {
+                    return 'Password must contain at least one number';
+                  }
+                  if (!RegExp(r'[!@#$%^&*(),.?":{}|<>]').hasMatch(value)) {
+                    return 'Password must contain at least one special character';
+                  }
+                  return null;
+                },
                 onChanged: (value) {
                   _tempPassword = value;
                 },
@@ -119,7 +137,7 @@ class _SignupPageState extends State<SignupPage> {
               TextButton(
                 child: Text(
                   'Already have an account? Signin',
-                  style: TextStyle(color: Colors.greenAccent),
+                  style: TextStyle(color: Colors.teal[900]),
                 ),
                 onPressed: () => Navigator.pushNamedAndRemoveUntil(
                   context,
